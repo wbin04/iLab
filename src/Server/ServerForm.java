@@ -7,11 +7,16 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JPanel;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,6 +27,7 @@ import Client.ClientPanel;
 import java.awt.Color;
 import javax.swing.JScrollPane;
 import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
 
 public class ServerForm {
 
@@ -36,11 +42,16 @@ public class ServerForm {
     private JLabel lblConTrong;
     private JTextField textField_1;
     private JButton btnChat;
-    private ServerChatForm chatWindow;
     private ExecutorService clientThreadPool;
     private ServerSocket serverSocket;
     private Map<Integer, ClientPanel> clientFormsMap;
     private Map<Integer, Boolean> isOpen;
+    private JTextArea chatArea;
+    private JTextField chatField;
+    private PrintWriter out;
+    private List<MyProcess> clientProcesses = new ArrayList<>();
+    private List<PrintWriter> clientWriters = new ArrayList<>();
+
 
     /**
      * Launch the application.
@@ -51,20 +62,12 @@ public class ServerForm {
                 try {
                     ServerForm window = new ServerForm();
                     window.frame.setVisible(true);
-                    startServer();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
     }
-    
-    private static void startServer() {
-		Thread serverThread = new Thread(() -> {
-			System.out.println("Server started...");
-		});
-		serverThread.start();
-	}
 
     /**
      * Create the application.
@@ -78,7 +81,7 @@ public class ServerForm {
      */
     private void initialize() {
         frame = new JFrame();
-        frame.setBounds(100, 100, 908, 535);
+        frame.setBounds(100, 100, 1203, 535);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().setLayout(null);
 
@@ -112,6 +115,7 @@ public class ServerForm {
         frame.getContentPane().add(lb4);
 
         tfNum = new JTextField();
+        tfNum.setText("10");
         tfNum.setBounds(447, 49, 96, 19);
         frame.getContentPane().add(tfNum);
         tfNum.setColumns(10);
@@ -161,13 +165,60 @@ public class ServerForm {
         frame.getContentPane().add(textField_1);
 
         btnChat = new JButton("Chat");
-        btnChat.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        		openChatWindow();
-        	}
-        });
         btnChat.setBounds(728, 137, 111, 21);
         frame.getContentPane().add(btnChat);
+        
+        chatArea = new JTextArea();
+        chatArea.setBounds(897, 174, 271, 249);
+        frame.getContentPane().add(chatArea);
+        
+        chatField = new JTextField();
+        chatField.setBounds(897, 453, 151, 19);
+        frame.getContentPane().add(chatField);
+        chatField.setColumns(10);
+        
+        JButton btnSend = new JButton("Send");
+        btnSend.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            	sendMessageToAllClients();
+            }
+        });
+
+        btnSend.setBounds(1073, 451, 85, 21);
+        frame.getContentPane().add(btnSend);
+    }
+    
+    private void sendMessageToAllClients() {
+        String message = chatField.getText();
+        if (!message.isEmpty()) {
+            String serverMessage = "Server: " + message;
+//            chatArea.append(serverMessage + "\n");
+            broadcastMessage(serverMessage);
+            chatField.setText("");
+        }
+    }
+
+    public void broadcastMessage(String message) {
+        synchronized (clientWriters) {
+        	System.out.println(clientWriters.size());
+            for (PrintWriter writer : clientWriters) {
+            	System.out.println(writer.toString());
+                writer.println(message);
+                writer.flush();
+            }
+        }
+    }
+
+    public void addClientWriter(PrintWriter writer) {
+        synchronized (clientWriters) {
+            clientWriters.add(writer);
+        }
+    }
+
+    public void removeClientWriter(PrintWriter writer) {
+        synchronized (clientWriters) {
+            clientWriters.remove(writer);
+        }
     }
 
     private void openClientInServerForm() {
@@ -215,27 +266,32 @@ public class ServerForm {
             new Thread(() -> {
                 try {
                     serverSocket = new ServerSocket(port, 10, InetAddress.getByName(serverIP));
-                    System.out.println("Server started on IP: " + serverIP + " and port: " + port);
+                    chatArea.append("Server started on IP: " + serverIP + " and port: " + port + "\n");
 
-                    for (int i = 0; i < numClients; i++) {
-                        Socket clientSocket = serverSocket.accept(); 
-                        MyProcess clientHandler = new MyProcess(clientSocket, i + 1, serverPanel, clientFormsMap, isOpen);
-                        clientThreadPool.submit(clientHandler);  
+                    while (true) {
+                        Socket clientSocket = serverSocket.accept();
+                        chatArea.append("Client đã kết nối!\n");
+
+                        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                        addClientWriter(out);
+
+                        MyProcess clientHandler = new MyProcess(clientSocket, clientProcesses.size() + 1, serverPanel, clientFormsMap, isOpen, clientProcesses, this);
+                        clientProcesses.add(clientHandler);
+                        clientThreadPool.submit(clientHandler);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }).start();
+            
+//            new Thread(() -> startServer(port, serverIP)).start();
 
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(frame, "Vui lòng nhập số lượng client hợp lệ!", "Lỗi: Nhập sai số lượng client", JOptionPane.ERROR_MESSAGE);
         } 
     }
     
-    private void openChatWindow() {
-		if (chatWindow == null || !chatWindow.isVisible()) {
-			chatWindow = new ServerChatForm();
-			chatWindow.setVisible(true);
-		}
-	}
+    public void appendToChatArea(String message) {
+        chatArea.append(message);
+    }
 }  

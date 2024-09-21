@@ -1,27 +1,14 @@
 package Client;
 
-import javax.swing.JButton;
-import javax.swing.JTextField;
-
-import Server.ServerForm;
-
-import javax.swing.JFrame;
-import javax.swing.JTextArea;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-
+import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.Inet4Address;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
-import javax.swing.JComboBox;
 
 public class ClientChatForm {
 
@@ -30,19 +17,19 @@ public class ClientChatForm {
     private JTextField tfName;
     private JTextField tfPort;
     private JTextArea chatArea;
-    private JComboBox comboBox;
+    private JTextField chatField;
+    private JComboBox<String> comboBox;
     private Socket socket;
     private PrintWriter out;
+    private BufferedReader in;
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    ClientChatForm window = new ClientChatForm();
-                    window.frame.setVisible(true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        SwingUtilities.invokeLater(() -> {
+            try {
+                ClientChatForm window = new ClientChatForm();
+                window.frame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
@@ -61,17 +48,18 @@ public class ClientChatForm {
         chatArea.setBounds(10, 203, 416, 172);
         frame.getContentPane().add(chatArea);
 
-        JTextField textField = new JTextField();
-        textField.setColumns(10);
-        textField.setBounds(10, 397, 254, 19);
-        frame.getContentPane().add(textField);
+        chatField = new JTextField();
+        chatField.setColumns(10);
+        chatField.setBounds(10, 397, 254, 19);
+        frame.getContentPane().add(chatField);
 
         JButton btnSend = new JButton("Send");
         btnSend.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-//        		sendMessage();
-        	}
+            public void actionPerformed(ActionEvent e) {
+                sendMessage();
+            }
         });
+
         btnSend.setBounds(315, 396, 85, 21);
         frame.getContentPane().add(btnSend);
 
@@ -80,6 +68,7 @@ public class ClientChatForm {
         frame.getContentPane().add(lb2);
 
         tfIP = new JTextField();
+        tfIP.setText("192.168.1.5");
         tfIP.setColumns(10);
         tfIP.setBounds(111, 45, 96, 19);
         frame.getContentPane().add(tfIP);
@@ -89,7 +78,7 @@ public class ClientChatForm {
         frame.getContentPane().add(lblNhapTen);
 
         tfName = new JTextField();
-        tfName.setText("nvbbb");
+        tfName.setText("aaa");
         tfName.setColumns(10);
         tfName.setBounds(315, 44, 96, 19);
         frame.getContentPane().add(tfName);
@@ -130,46 +119,96 @@ public class ClientChatForm {
         btnJoin.setBounds(282, 132, 85, 21);
         frame.getContentPane().add(btnJoin);
         
-//        System.out.println(Server.ServerForm.getMsg());
     }
-    public void connectServer() {
-        try {
-            int port = Integer.parseInt(tfPort.getText());
-            InetAddress ip = InetAddress.getByName(tfIP.getText());
-            socket = new Socket(ip, port);
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
+    private void connectServer() {
+        new Thread(() -> {
+            try {
+                int port = Integer.parseInt(tfPort.getText());
+                InetAddress ip = InetAddress.getByName(tfIP.getText());
+                socket = new Socket(ip, port);
 
-            String machineList = in.readLine();
-            if (machineList != null) {
-                String[] machines = machineList.split(",");
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                out = new PrintWriter(socket.getOutputStream(), true);
 
-                comboBox.removeAllItems();
-                for (String machine : machines) {
-                    comboBox.addItem(machine);
+                String machineList = in.readLine();
+                System.out.println("List các máy trống: " + machineList);
+
+                if (machineList == null || machineList.isEmpty()) {
+                    SwingUtilities.invokeLater(() -> chatArea.append("Không có máy nào sẵn sàng.\n"));
+                } else {
+                    String[] machines = machineList.split(",");
+                    SwingUtilities.invokeLater(() -> {
+                        comboBox.removeAllItems();
+                        for (String machine : machines) {
+                            comboBox.addItem(machine);
+                        }
+                        chatArea.append("Kết nối thành công và nhận danh sách máy.\n");
+                    });
                 }
-            }
 
-            chatArea.append("Kết nối thành công với server.\n");
-        } catch (Exception e) {
-            e.printStackTrace();
-            chatArea.append("Kết nối thất bại\n");
-            JOptionPane.showMessageDialog(frame, "Kết nối thất bại. Vui lòng kiểm tra lại IP và Port.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
+            } catch (IOException e) {
+                e.printStackTrace();
+                SwingUtilities.invokeLater(() -> {
+                    chatArea.append("Kết nối thất bại\n");
+                    JOptionPane.showMessageDialog(frame, "Kết nối thất bại. Vui lòng kiểm tra lại IP và Port.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
     }
-    
-    public void joinServer() {
-    	try {
-    		String clientName = tfName.getText();
-            String selectedMachine = comboBox.getSelectedItem().toString();
-            out.println(selectedMachine + ":" + clientName);  
-            
-            chatArea.append("Connected to server as " + clientName + " on machine " + selectedMachine + "\n");
-            frame.setTitle(clientName);
-		} catch (Exception e) {
-			e.printStackTrace();
-            chatArea.append("Vào phòng thất bại\n");
-		}
+
+    private void joinServer() {
+        new Thread(() -> {
+            try {
+                String clientName = tfName.getText();
+                String selectedMachine = comboBox.getSelectedItem().toString();
+                System.out.println("Máy " + selectedMachine + " được chọn");
+                if (selectedMachine != null && !selectedMachine.isEmpty()) {
+                    out.println(selectedMachine + ":" + clientName);
+
+                    SwingUtilities.invokeLater(() -> {
+                    	String noticeMessage = clientName + " ở máy số " + selectedMachine + " kết nối thành công\n";
+                        chatArea.append(noticeMessage);
+                        frame.setTitle(clientName);
+                    });
+                    
+                    startMessageListener();
+                } else {
+                    SwingUtilities.invokeLater(() -> chatArea.append("Vui lòng chọn máy.\n"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                SwingUtilities.invokeLater(() -> {
+                    chatArea.append("Vào phòng thất bại\n");
+                    JOptionPane.showMessageDialog(frame, "Lỗi khi tham gia phòng. Vui lòng thử lại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
+    }
+
+    private void startMessageListener() {
+        new Thread(() -> {
+            try {
+                String message;
+                while ((message = in.readLine()) != null) {
+                    final String finalMessage = message;
+                    SwingUtilities.invokeLater(() -> chatArea.append(finalMessage + "\n"));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                SwingUtilities.invokeLater(() -> chatArea.append("Mất kết nối với server.\n"));
+            }
+        }).start();
+    }
+
+    private void sendMessage() {
+    	String message = chatField.getText();
+        if (out != null && !message.isEmpty()) {
+            out.println(tfName.getText() + ": " + message); 
+            chatArea.append(tfName.getText() + ": " + message + "\n"); 
+            chatField.setText(""); 
+        } else {
+            chatArea.append("Lỗi: Không thể gửi tin nhắn.\n");
+        }
     }
 }
