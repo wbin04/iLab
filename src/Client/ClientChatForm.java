@@ -168,7 +168,8 @@ public class ClientChatForm {
                 e.printStackTrace();
                 SwingUtilities.invokeLater(() -> {
                     chatArea.append("Kết nối thất bại\n");
-                    JOptionPane.showMessageDialog(frame, "Kết nối thất bại. Vui lòng kiểm tra lại IP và Port.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+//                    JOptionPane.showMessageDialog(frame, "Kết nối thất bại. Vui lòng kiểm tra lại IP và Port.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    System.out.println("Ket noi that bai, kiem ra IP va Port");
                 });
             }
         }).start();
@@ -197,7 +198,8 @@ public class ClientChatForm {
                 e.printStackTrace();
                 SwingUtilities.invokeLater(() -> {
                     chatArea.append("Vào phòng thất bại\n");
-                    JOptionPane.showMessageDialog(frame, "Lỗi khi tham gia phòng. Vui lòng thử lại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+//                    JOptionPane.showMessageDialog(frame, "Lỗi khi tham gia phòng. Vui lòng thử lại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    System.out.println("Tham gia phong khong thanh cong");
                 });
             }
         }).start();
@@ -242,7 +244,8 @@ public class ClientChatForm {
     private void handleServerClosing() {
         SwingUtilities.invokeLater(() -> {
             chatArea.append("Server đã đóng. Kết nối bị ngắt.\n");
-            JOptionPane.showMessageDialog(frame, "Server đã đóng. Kết nối bị ngắt.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+//            JOptionPane.showMessageDialog(frame, "Server đã đóng. Kết nối bị ngắt.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            System.out.println("Server da dong, ket noi bi ngat");
             handleDisconnect();
         });
     }

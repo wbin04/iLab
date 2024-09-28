@@ -290,7 +290,8 @@ public class ServerForm {
             }).start();
 
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(frame, "Vui lòng nhập số lượng client hợp lệ!", "Lỗi: Nhập sai số lượng client", JOptionPane.ERROR_MESSAGE);
+//            JOptionPane.showMessageDialog(frame, "Vui lòng nhập số lượng client hợp lệ!", "Lỗi: Nhập sai số lượng client", JOptionPane.ERROR_MESSAGE);
+        	ex.printStackTrace();
         } 
     }
     
@@ -304,7 +305,8 @@ public class ServerForm {
     }
     private void closeServer() {
         if (!isServerRunning) {
-            JOptionPane.showMessageDialog(frame, "Server is not running.", "Info", JOptionPane.INFORMATION_MESSAGE);
+//            JOptionPane.showMessageDialog(frame, "Server is not running.", "Info", JOptionPane.INFORMATION_MESSAGE);
+        	System.out.println("Server chua hoat dong");
             return;
         }
 
@@ -360,7 +362,8 @@ public class ServerForm {
                 clientFormsMap.clear();
                 isOpen.clear();
 
-                JOptionPane.showMessageDialog(frame, "Server has been closed successfully.", "Server Closed", JOptionPane.INFORMATION_MESSAGE);
+//                JOptionPane.showMessageDialog(frame, "Server has been closed successfully.", "Server Closed", JOptionPane.INFORMATION_MESSAGE);
+                System.out.println("Server da dong thanh cong");
             });
 
             closeExecutor.shutdown();
