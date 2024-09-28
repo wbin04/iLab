@@ -16,12 +16,15 @@ public class ClientChatForm {
     private JTextField tfIP;
     private JTextField tfName;
     private JTextField tfPort;
+    private JButton btnConnect;
+    private JButton btnDisconnect;
     private JTextArea chatArea;
     private JTextField chatField;
     private JComboBox<String> comboBox;
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
+    private boolean isConnected = false;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -83,7 +86,7 @@ public class ClientChatForm {
         tfName.setBounds(315, 44, 96, 19);
         frame.getContentPane().add(tfName);
 
-        JButton btnConnect = new JButton("Connect");
+        btnConnect = new JButton("Connect");
         btnConnect.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
         		connectServer();
@@ -97,7 +100,7 @@ public class ClientChatForm {
         frame.getContentPane().add(lblNhapPort);
 
         tfPort = new JTextField();
-        tfPort.setText("99");
+        tfPort.setText("1234");
         tfPort.setColumns(10);
         tfPort.setBounds(111, 90, 96, 19);
         frame.getContentPane().add(tfPort);
@@ -119,11 +122,22 @@ public class ClientChatForm {
         btnJoin.setBounds(282, 132, 85, 21);
         frame.getContentPane().add(btnJoin);
         
+        btnDisconnect = new JButton("Disconnect");
+        btnDisconnect.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                disconnectFromServer();
+            }
+        });
+        btnDisconnect.setBounds(68, 132, 85, 21);
+        btnDisconnect.setVisible(false);
+        frame.getContentPane().add(btnDisconnect);
+        
     }
 
     private void connectServer() {
         new Thread(() -> {
             try {
+            	chatArea.setText("");
                 int port = Integer.parseInt(tfPort.getText());
                 InetAddress ip = InetAddress.getByName(tfIP.getText());
                 socket = new Socket(ip, port);
@@ -137,6 +151,7 @@ public class ClientChatForm {
                 if (machineList == null || machineList.isEmpty()) {
                     SwingUtilities.invokeLater(() -> chatArea.append("Không có máy nào sẵn sàng.\n"));
                 } else {
+                	isConnected = true;
                     String[] machines = machineList.split(",");
                     SwingUtilities.invokeLater(() -> {
                         comboBox.removeAllItems();
@@ -144,6 +159,8 @@ public class ClientChatForm {
                             comboBox.addItem(machine);
                         }
                         chatArea.append("Kết nối thành công và nhận danh sách máy.\n");
+                        btnDisconnect.setVisible(true);
+                        btnConnect.setVisible(false);
                     });
                 }
 
@@ -191,12 +208,22 @@ public class ClientChatForm {
             try {
                 String message;
                 while ((message = in.readLine()) != null) {
-                    final String finalMessage = message;
-                    SwingUtilities.invokeLater(() -> chatArea.append(finalMessage + "\n"));
+                    if (message.equals("SERVER_CLOSING")) {
+                        handleServerClosing();
+                        break;
+                    } else {
+                        final String finalMessage = message;
+                        SwingUtilities.invokeLater(() -> chatArea.append(finalMessage + "\n"));
+                    }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
-                SwingUtilities.invokeLater(() -> chatArea.append("Mất kết nối với server.\n"));
+            	if (isConnected) {
+                    e.printStackTrace();
+                    SwingUtilities.invokeLater(() -> {
+                        chatArea.append("Mất kết nối với server.\n");
+                        handleDisconnect();
+                    });
+                }
             }
         }).start();
     }
@@ -209,6 +236,50 @@ public class ClientChatForm {
             chatField.setText(""); 
         } else {
             chatArea.append("Lỗi: Không thể gửi tin nhắn.\n");
+        }
+    }
+    
+    private void handleServerClosing() {
+        SwingUtilities.invokeLater(() -> {
+            chatArea.append("Server đã đóng. Kết nối bị ngắt.\n");
+            JOptionPane.showMessageDialog(frame, "Server đã đóng. Kết nối bị ngắt.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            handleDisconnect();
+        });
+    }
+    
+    private void handleDisconnect() {
+        isConnected = false;
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        btnDisconnect.setVisible(false);
+        btnConnect.setVisible(true);
+        comboBox.removeAllItems();
+        frame.setTitle("Client Chat");
+    }
+    
+    private void disconnectFromServer() {
+        if (isConnected) {
+            try {
+                if (out != null) {
+                    out.println("DISCONNECT:" + tfName.getText());
+                    out.close();
+                }
+                if (in != null) in.close();
+                if (socket != null) socket.close();
+
+                handleDisconnect();
+                chatArea.append("Đã ngắt kết nối từ server.\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+                chatArea.append("Lỗi khi ngắt kết nối: " + e.getMessage() + "\n");
+            }
+        } else {
+            chatArea.append("Không có kết nối đến server nào.\n");
         }
     }
 }

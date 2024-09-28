@@ -40,8 +40,6 @@ public class MyProcess implements Runnable {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
             
-//            serverForm.addClientWriter(out);
-            
             sendAvailableMachineList();
             
             String clientInfo = in.readLine();
@@ -50,6 +48,13 @@ public class MyProcess implements Runnable {
             String noticeMessage = clientName + " ở máy số " + selectedMachine + " kết nối thành công";
             broadcastMessage(noticeMessage);
             updateServerChatArea(noticeMessage);
+            int count = 0;
+            for(int num : isOpen.keySet()) {
+            	if (!isOpen.get(num)) {
+                    count++;
+                }
+            }
+            serverForm.updateNumMachine(clientFormsMap.size() - count, count);
             
             String clientMessage;
             while ((clientMessage = in.readLine()) != null) {
@@ -115,14 +120,14 @@ public class MyProcess implements Runnable {
         });
     }
 
-    private void closeConnection() {
+    public void closeConnection() {
         try {
             if (in != null) in.close();
             if (out != null) {
                 serverForm.removeClientWriter(out);
                 out.close();
             }
-            if (socket != null) socket.close();
+            if (socket != null && !socket.isClosed()) socket.close();
             
             isOpen.put(selectedMachine, false);
             SwingUtilities.invokeLater(() -> {

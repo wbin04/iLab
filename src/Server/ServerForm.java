@@ -5,6 +5,7 @@ import javax.swing.JFrame;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.JPanel;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -18,8 +19,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.awt.event.ActionEvent;
 import javax.swing.border.LineBorder;
 
@@ -34,14 +37,11 @@ public class ServerForm {
     private JFrame frame;
     private JTextField tfNum;
     private JTextField tfIP;
-    private JTextField tfSM;
-    private JTextField tfDG;
     private JPanel serverPanel;
     private JScrollPane scrollPane;
-    private JTextField textField;
+    private JTextField tfAvailable;
     private JLabel lblConTrong;
-    private JTextField textField_1;
-    private JButton btnChat;
+    private JTextField tfUnavailable;
     private ExecutorService clientThreadPool;
     private ServerSocket serverSocket;
     private Map<Integer, ClientPanel> clientFormsMap;
@@ -51,6 +51,9 @@ public class ServerForm {
     private PrintWriter out;
     private List<MyProcess> clientProcesses = new ArrayList<>();
     private List<PrintWriter> clientWriters = new ArrayList<>();
+    private JTextField tfPort;
+    private boolean isServerRunning = false;
+    private ExecutorService closeExecutor;
 
 
     /**
@@ -95,6 +98,11 @@ public class ServerForm {
         frame.getContentPane().add(btnOpen);
 
         JButton btnClose = new JButton("Close Server");
+        btnClose.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                closeServer();
+            }
+        });
         btnClose.setBounds(728, 93, 111, 21);
         frame.getContentPane().add(btnClose);
 
@@ -105,14 +113,6 @@ public class ServerForm {
         JLabel lb2 = new JLabel("Nhap IP:");
         lb2.setBounds(46, 52, 91, 13);
         frame.getContentPane().add(lb2);
-
-        JLabel lb3 = new JLabel("Nhap SM:");
-        lb3.setBounds(46, 96, 91, 13);
-        frame.getContentPane().add(lb3);
-
-        JLabel lb4 = new JLabel("Nhap DG:");
-        lb4.setBounds(46, 141, 91, 13);
-        frame.getContentPane().add(lb4);
 
         tfNum = new JTextField();
         tfNum.setText("10");
@@ -125,16 +125,6 @@ public class ServerForm {
         tfIP.setColumns(10);
         tfIP.setBounds(147, 50, 96, 19);
         frame.getContentPane().add(tfIP);
-
-        tfSM = new JTextField();
-        tfSM.setColumns(10);
-        tfSM.setBounds(147, 93, 96, 19);
-        frame.getContentPane().add(tfSM);
-
-        tfDG = new JTextField();
-        tfDG.setColumns(10);
-        tfDG.setBounds(147, 138, 96, 19);
-        frame.getContentPane().add(tfDG);
 
         serverPanel = new JPanel();
         serverPanel.setBorder(new LineBorder(new Color(0, 0, 0)));
@@ -150,23 +140,19 @@ public class ServerForm {
         lb1_1.setBounds(342, 96, 91, 13);
         frame.getContentPane().add(lb1_1);
 
-        textField = new JTextField();
-        textField.setColumns(10);
-        textField.setBounds(447, 93, 96, 19);
-        frame.getContentPane().add(textField);
+        tfAvailable = new JTextField();
+        tfAvailable.setColumns(10);
+        tfAvailable.setBounds(447, 93, 96, 19);
+        frame.getContentPane().add(tfAvailable);
 
         lblConTrong = new JLabel("Con trong:");
         lblConTrong.setBounds(342, 141, 91, 13);
         frame.getContentPane().add(lblConTrong);
 
-        textField_1 = new JTextField();
-        textField_1.setColumns(10);
-        textField_1.setBounds(447, 138, 96, 19);
-        frame.getContentPane().add(textField_1);
-
-        btnChat = new JButton("Chat");
-        btnChat.setBounds(728, 137, 111, 21);
-        frame.getContentPane().add(btnChat);
+        tfUnavailable = new JTextField();
+        tfUnavailable.setColumns(10);
+        tfUnavailable.setBounds(447, 138, 96, 19);
+        frame.getContentPane().add(tfUnavailable);
         
         chatArea = new JTextArea();
         chatArea.setBounds(897, 174, 271, 249);
@@ -186,13 +172,23 @@ public class ServerForm {
 
         btnSend.setBounds(1073, 451, 85, 21);
         frame.getContentPane().add(btnSend);
+        
+        JLabel lblNhapPort = new JLabel("Nhap Port:");
+        lblNhapPort.setBounds(46, 95, 91, 13);
+        frame.getContentPane().add(lblNhapPort);
+        
+        tfPort = new JTextField();
+        tfPort.setText("1234");
+        tfPort.setColumns(10);
+        tfPort.setBounds(147, 93, 96, 19);
+        frame.getContentPane().add(tfPort);
     }
     
     private void sendMessageToAllClients() {
         String message = chatField.getText();
         if (!message.isEmpty()) {
             String serverMessage = "Server: " + message;
-//            chatArea.append(serverMessage + "\n");
+            chatArea.append(serverMessage + "\n");
             broadcastMessage(serverMessage);
             chatField.setText("");
         }
@@ -225,7 +221,7 @@ public class ServerForm {
         try {
             int numClients = Integer.parseInt(tfNum.getText());
             String serverIP = tfIP.getText();
-            int port = 99;
+            int port = Integer.parseInt(tfPort.getText());
 
             serverPanel.removeAll();
 
@@ -265,26 +261,33 @@ public class ServerForm {
 
             new Thread(() -> {
                 try {
-                    serverSocket = new ServerSocket(port, 10, InetAddress.getByName(serverIP));
+                    serverSocket = new ServerSocket(port, numClients, InetAddress.getByName(serverIP));
                     chatArea.append("Server started on IP: " + serverIP + " and port: " + port + "\n");
+                    isServerRunning = true;
 
-                    while (true) {
-                        Socket clientSocket = serverSocket.accept();
-                        chatArea.append("Client đã kết nối!\n");
+                    while (isServerRunning) {
+                    	try {
+                    		Socket clientSocket = serverSocket.accept();
+                            chatArea.append("Client đã kết nối!\n");
 
-                        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                        addClientWriter(out);
+                            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                            addClientWriter(out);
 
-                        MyProcess clientHandler = new MyProcess(clientSocket, clientProcesses.size() + 1, serverPanel, clientFormsMap, isOpen, clientProcesses, this);
-                        clientProcesses.add(clientHandler);
-                        clientThreadPool.submit(clientHandler);
+                            MyProcess clientHandler = new MyProcess(clientSocket, clientProcesses.size() + 1, serverPanel, clientFormsMap, isOpen, clientProcesses, this);
+                            clientProcesses.add(clientHandler);
+                            clientThreadPool.submit(clientHandler);
+                        } catch (IOException e) {
+                            if (isServerRunning) {
+                                e.printStackTrace();
+                            }
+                            System.out.println("err isServerRunning");
+                            break;
+                        }                        
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }).start();
-            
-//            new Thread(() -> startServer(port, serverIP)).start();
 
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(frame, "Vui lòng nhập số lượng client hợp lệ!", "Lỗi: Nhập sai số lượng client", JOptionPane.ERROR_MESSAGE);
@@ -293,5 +296,74 @@ public class ServerForm {
     
     public void appendToChatArea(String message) {
         chatArea.append(message);
+    }
+    
+    public void updateNumMachine(int numAvai, int numUnavai) {
+    	tfAvailable.setText(Integer.toString(numAvai));
+        tfUnavailable.setText(Integer.toString(numUnavai));
+    }
+    private void closeServer() {
+        if (!isServerRunning) {
+            JOptionPane.showMessageDialog(frame, "Server is not running.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        isServerRunning = false;
+        closeExecutor = Executors.newSingleThreadExecutor();
+
+        closeExecutor.execute(() -> {
+            broadcastMessage("SERVER_CLOSING");
+
+            long timeoutMillis = 5000; 
+            long startTime = System.currentTimeMillis();
+
+            for (MyProcess clientProcess : clientProcesses) {
+                if (System.currentTimeMillis() - startTime > timeoutMillis) {
+                    break; 
+                }
+                CompletableFuture.runAsync(clientProcess::closeConnection)
+                    .orTimeout(1, TimeUnit.SECONDS)
+                    .exceptionally(ex -> {
+                        System.err.println("Failed to close client connection: " + ex.getMessage());
+                        return null;
+                    });
+            }
+
+            try {
+                Thread.sleep(Math.max(0, timeoutMillis - (System.currentTimeMillis() - startTime)));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            clientProcesses.clear();
+
+            try {
+                if (serverSocket != null && !serverSocket.isClosed()) {
+                    serverSocket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (clientThreadPool != null) {
+                clientThreadPool.shutdownNow();
+            }
+
+            SwingUtilities.invokeLater(() -> {
+                chatArea.append("Server has been closed.\n");
+                tfAvailable.setText("0");
+                tfUnavailable.setText(tfNum.getText());
+                serverPanel.removeAll();
+                serverPanel.revalidate();
+                serverPanel.repaint();
+
+                clientFormsMap.clear();
+                isOpen.clear();
+
+                JOptionPane.showMessageDialog(frame, "Server has been closed successfully.", "Server Closed", JOptionPane.INFORMATION_MESSAGE);
+            });
+
+            closeExecutor.shutdown();
+        });
     }
 }  

@@ -5,6 +5,7 @@
  */
 package Stream;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.Robot;
@@ -57,6 +58,7 @@ public class Stream extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 486, Short.MAX_VALUE)
         );
+        jPanel2.setBackground(Color.RED);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -74,6 +76,7 @@ public class Stream extends javax.swing.JFrame {
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
+        jPanel1.setBackground(Color.YELLOW);
 
         jMenu1.setText("Connect");
 
