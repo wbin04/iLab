@@ -1,4 +1,4 @@
-package RemoteDesktopClient;
+package Client;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
