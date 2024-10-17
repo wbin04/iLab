@@ -1,4 +1,4 @@
-package Client;
+package RemoteDesktopClient;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -9,12 +9,15 @@ import java.net.Socket;
 public class ClientFileSender implements Runnable{
 	File file;
 	Socket soc;
+	DataOutputStream dos;
 	public ClientFileSender(Socket socket, File file) {
 		try {
 			this.soc = socket;
 			this.file = file;
+			this.dos = new DataOutputStream(soc.getOutputStream());
 		} catch (Exception e) {
 			// TODO: handle exception
+			e.printStackTrace();
 		}
 	}
 	
@@ -22,13 +25,12 @@ public class ClientFileSender implements Runnable{
 	public void run() {
 		// TODO Auto-generated method stub
 		try {
-			DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
-			dos.writeUTF("TRANSFER_FILE");	
+			FileInputStream fileIn = new FileInputStream(file);
+			dos.writeUTF("TRANSFER_FILE");
 			dos.writeUTF(file.getName());
 			dos.writeLong(file.length());
 			System.out.println("Đang gửi file: " + file.getName());
 			
-			FileInputStream fileIn = new FileInputStream(file);
 			byte[] buffer = new byte[8192];
 			int bytesRead;
 			while((bytesRead = fileIn.read(buffer)) != -1) {
