@@ -19,8 +19,6 @@ public class ClientHandler implements Runnable{
 	private DataInputStream input;
 	private DataOutputStream output;
 	
-	
-	
 	public ClientHandler(Socket socket, String id) {
 		this.socket = socket;
 		this.id = id;
@@ -48,45 +46,20 @@ public class ClientHandler implements Runnable{
   
          new Thread(this::handleClientEvents).start();
          new Thread(this::handleRemoteDesktop).start();
-         //new Thread(this::handleFileTransfer).start();
 
-		//List process
-//		while(true) {
-//			try {
-//				String command = input.readUTF();
-//				if (command.equals("LIST_PROCESSES")) {
-//                    sendProcessList();
-//                } else if (command.equals("KILL_PROCESS")) {
-//                    long pid = input.readLong();
-//                    killProcess(pid);
-//                }
-//			} catch (Exception e) {
-//				// TODO: handle exception
-//			}
-//		}
-		
 		//List apps
-//		while (true) {
-//            try {
-//                sendRunningApps();
-//           
-//                Thread.sleep(5000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
+		
 	}
 	
-	private List<String[]> getRunningApps() {
-	    List<String[]> apps = new ArrayList<>();
+	private void sendRunningApps() {
 	    try {
-	    	String command = "powershell.exe gps | where {$_.mainwindowhandle -ne 0} | select ProcessName, Id";
+	        List<String[]> apps = new ArrayList<>();
+	        String command = "powershell.exe gps | where {$_.mainwindowhandle -ne 0} | select ProcessName, Id";
 	        Process process = Runtime.getRuntime().exec(command);
 	        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
 	        String line;
 	        while ((line = reader.readLine()) != null) {
-	            // Bỏ qua các dòng trống hoặc tiêu đề không cần thiết
 	            if (line.trim().isEmpty() || line.startsWith("ProcessName") || line.startsWith("--")) {
 	                continue;
 	            }
@@ -95,93 +68,47 @@ public class ClientHandler implements Runnable{
 	            String[] parts = line.trim().split("\\s+");
 	            if (parts.length >= 2) {
 	                String appName = parts[0];
+	  
 	                String appId = parts[1];
 	                apps.add(new String[]{appName, appId});
 	            }
 	        }
-	        process.waitFor();
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
-	    return apps;
-	}
-
-	// Phương thức gửi danh sách ứng dụng qua socket
-	private void sendRunningApps() {
-	    try {
-	        List<String[]> apps = getRunningApps();
-	        output.writeInt(apps.size());  // Gửi số lượng ứng dụng
-	        for (String[] app : apps) {
-	            output.writeUTF(app[0]);  // Gửi tên ứng dụng
-	            output.writeUTF(app[1]);  // Gửi ID ứng dụng
+	        synchronized(output) {
+	        	output.writeInt(apps.size());  // Gửi số lượng ứng dụng
+		        output.flush();
+		        System.out.println("appcount = " + apps.size());
+		        for (String[] app : apps) {
+		            output.writeUTF(app[0]);  // Gửi tên ứng dụng
+		            output.writeUTF(app[1]);  // Gửi ID ứng dụng
+		        }
+		        System.out.println("Output đã được gửi xong");
+		        output.flush();
 	        }
-	        output.flush();
+	        
 	    } catch (IOException e) {
 	        e.printStackTrace();
 	    }
 	}
-	
-	private void sendProcessList() {
-		try {
-			List<ProcessHandle> processes = ProcessHandle.allProcesses().filter(ProcessHandle::isAlive).collect(Collectors.toList());
-			output.writeInt(processes.size()); // Gửi số lượng processes
-			for (ProcessHandle process : processes) {
-				Info info = process.info();
-				output.writeLong(process.pid());
-				
-				String commandPath = info.command().orElse("Unknown Application");
-		        String command = commandPath.substring(commandPath.lastIndexOf(File.separator) + 1); // Chỉ lấy tên file
-		        output.writeUTF(command); // Gửi tên
-		        
-				output.writeUTF(info.user().orElse("Unknown")); //Gửi người dùng
-			}
-			output.flush();
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-	}
-	
-	private void killProcess(long pid) throws IOException {
-        ProcessHandle.of(pid).ifPresent(process -> {
-            process.destroy();
+	 private void handleRemoteDesktop() {
+        while (true) {
             try {
-                output.writeUTF("Process " + pid + " terminated.");
-            } catch (IOException e) {
+            	
+                Robot r = new Robot();
+                Rectangle rectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+                BufferedImage img = r.createScreenCapture(rectangle);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(img, "png", baos);
+                byte[] imageBytes = baos.toByteArray();
+
+                output.writeInt(imageBytes.length);
+                output.write(imageBytes);
+                output.flush();
+                Thread.sleep(50);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+        }
     }
-	
-	private void killProcessByPID(int pid) {
-	    try {
-	        String command = "taskkill /PID " + pid + " /F"; // Using taskkill to forcefully end process
-	        Runtime.getRuntime().exec(command);
-	        System.out.println("Process with PID " + pid + " terminated.");
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
-	}
-	
-
-	 private void handleRemoteDesktop() {
-	        while (true) {
-	            try {
-	                Robot r = new Robot();
-	                Rectangle rectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-	                BufferedImage img = r.createScreenCapture(rectangle);
-	                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	                ImageIO.write(img, "png", baos);
-	                byte[] imageBytes = baos.toByteArray();
-
-	                output.writeInt(imageBytes.length);
-	                output.write(imageBytes);
-	                output.flush();
-	                Thread.sleep(50);
-	            } catch (Exception e) {
-	                e.printStackTrace();
-	            }
-	        }
-	    }
 	 
     private void handleClientEvents() {
         try {
@@ -190,7 +117,7 @@ public class ClientHandler implements Runnable{
             while (true) {
                 // Nhận loại sự kiện từ client
                 String eventType = input.readUTF();
-
+                System.out.println("eventType la : " + eventType);
                 switch (eventType) {
                     case "MOUSE_PRESS":
                     case "MOUSE_RELEASE":
@@ -239,6 +166,11 @@ public class ClientHandler implements Runnable{
                     case "TRANSFER_FILE":
                     	handleFileTransfer();
                     	break;
+                    case "REQUEST_RUNNING_APPS":
+                    	
+                    	sendRunningApps();
+                    	
+                    	break;
                 }
             }
         } catch (Exception e) {
@@ -272,4 +204,6 @@ public class ClientHandler implements Runnable{
 			e.printStackTrace();
 		}
     }
+    
+    
 }

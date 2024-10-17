@@ -16,6 +16,9 @@ public class RemoteServer {
 				++i;
 				Thread client = new Thread(clientHandler);
 				client.start();
+//				ClientHandlerTaskManager clientTM = new ClientHandlerTaskManager(soc);
+//				Thread client = new Thread(clientTM);
+//				client.start();
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
