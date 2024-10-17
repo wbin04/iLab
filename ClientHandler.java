@@ -53,37 +53,33 @@ public class ClientHandler implements Runnable{
 	
 	private void sendRunningApps() {
 	    try {
-	        List<String[]> apps = new ArrayList<>();
-	        String command = "powershell.exe gps | where {$_.mainwindowhandle -ne 0} | select ProcessName, Id";
-	        Process process = Runtime.getRuntime().exec(command);
-	        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+	    	 synchronized(output) {
+	             output.writeUTF("TASK_MANAGER");  // Gửi mã định danh trước
+	             List<String[]> apps = new ArrayList<>();
+	             String command = "powershell.exe gps | where {$_.mainwindowhandle -ne 0} | select ProcessName, Id";
+	             Process process = Runtime.getRuntime().exec(command);
+	             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-	        String line;
-	        while ((line = reader.readLine()) != null) {
-	            if (line.trim().isEmpty() || line.startsWith("ProcessName") || line.startsWith("--")) {
-	                continue;
-	            }
-	            
-	            // Tách tên ứng dụng và PID
-	            String[] parts = line.trim().split("\\s+");
-	            if (parts.length >= 2) {
-	                String appName = parts[0];
-	  
-	                String appId = parts[1];
-	                apps.add(new String[]{appName, appId});
-	            }
-	        }
-	        synchronized(output) {
-	        	output.writeInt(apps.size());  // Gửi số lượng ứng dụng
-		        output.flush();
-		        System.out.println("appcount = " + apps.size());
-		        for (String[] app : apps) {
-		            output.writeUTF(app[0]);  // Gửi tên ứng dụng
-		            output.writeUTF(app[1]);  // Gửi ID ứng dụng
-		        }
-		        System.out.println("Output đã được gửi xong");
-		        output.flush();
-	        }
+	             String line;
+	             while ((line = reader.readLine()) != null) {
+	                 if (line.trim().isEmpty() || line.startsWith("ProcessName") || line.startsWith("--")) {
+	                     continue;
+	                 }
+	                 String[] parts = line.trim().split("\\s+");
+	                 if (parts.length >= 2) {
+	                     String appName = parts[0];
+	                     String appId = parts[1];
+	                     apps.add(new String[]{appName, appId});
+	                 }
+	             }
+
+	             output.writeInt(apps.size());  // Gửi số lượng ứng dụng
+	             for (String[] app : apps) {
+	                 output.writeUTF(app[0]);  // Gửi tên ứng dụng
+	                 output.writeUTF(app[1]);  // Gửi ID ứng dụng
+	             }
+	             output.flush();
+	         }
 	        
 	    } catch (IOException e) {
 	        e.printStackTrace();
@@ -99,10 +95,14 @@ public class ClientHandler implements Runnable{
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(img, "png", baos);
                 byte[] imageBytes = baos.toByteArray();
+                
+                synchronized(output) {
+                    output.writeUTF("REMOTE_DESKTOP");  // Gửi mã định danh
+                    output.writeInt(imageBytes.length);
+                    output.write(imageBytes);
+                    output.flush();
+                }
 
-                output.writeInt(imageBytes.length);
-                output.write(imageBytes);
-                output.flush();
                 Thread.sleep(50);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -117,7 +117,7 @@ public class ClientHandler implements Runnable{
             while (true) {
                 // Nhận loại sự kiện từ client
                 String eventType = input.readUTF();
-                System.out.println("eventType la : " + eventType);
+                if(eventType.equals("REQUEST_RUNNING_APPS")) System.out.println("eventType la : " + eventType);
                 switch (eventType) {
                     case "MOUSE_PRESS":
                     case "MOUSE_RELEASE":
@@ -167,7 +167,6 @@ public class ClientHandler implements Runnable{
                     	handleFileTransfer();
                     	break;
                     case "REQUEST_RUNNING_APPS":
-                    	
                     	sendRunningApps();
                     	
                     	break;
