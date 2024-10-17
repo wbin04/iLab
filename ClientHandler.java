@@ -51,28 +51,38 @@ public class ClientHandler implements Runnable{
 		
 	}
 	
+	private List<String[]> getRunningApps() {
+        List<String[]> apps = new ArrayList<>();
+        try {
+            String command = "powershell.exe gps | where {$_.mainwindowhandle -ne 0} | select ProcessName, Id";
+            Process process = Runtime.getRuntime().exec(command);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty() || line.startsWith("ProcessName") || line.startsWith("--")) {
+                    continue;
+                }
+
+                String[] parts = line.trim().split("\\s+");
+                if (parts.length >= 2) {
+                    String appName = parts[0];
+                    String appId = parts[1];
+                    apps.add(new String[]{appName, appId});
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return apps;
+    }
+	
 	private void sendRunningApps() {
 	    try {
 	    	 synchronized(output) {
 	             output.writeUTF("TASK_MANAGER");  // Gửi mã định danh trước
-	             List<String[]> apps = new ArrayList<>();
-	             String command = "powershell.exe gps | where {$_.mainwindowhandle -ne 0} | select ProcessName, Id";
-	             Process process = Runtime.getRuntime().exec(command);
-	             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-	             String line;
-	             while ((line = reader.readLine()) != null) {
-	                 if (line.trim().isEmpty() || line.startsWith("ProcessName") || line.startsWith("--")) {
-	                     continue;
-	                 }
-	                 String[] parts = line.trim().split("\\s+");
-	                 if (parts.length >= 2) {
-	                     String appName = parts[0];
-	                     String appId = parts[1];
-	                     apps.add(new String[]{appName, appId});
-	                 }
-	             }
-
+	             
+	             List<String[]> apps = getRunningApps();
 	             output.writeInt(apps.size());  // Gửi số lượng ứng dụng
 	             for (String[] app : apps) {
 	                 output.writeUTF(app[0]);  // Gửi tên ứng dụng
@@ -85,7 +95,42 @@ public class ClientHandler implements Runnable{
 	        e.printStackTrace();
 	    }
 	}
-	 private void handleRemoteDesktop() {
+	
+	private void sendScreenShot() {
+		try {
+			synchronized(output) {
+				Robot r = new Robot();
+				Rectangle rectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+				BufferedImage img = r.createScreenCapture(rectangle);
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				ImageIO.write(img, "png", baos);
+				byte[] imageBytes = baos.toByteArray();
+				
+				output.writeUTF("SCREENSHOT");
+				output.writeInt(imageBytes.length);
+				output.write(imageBytes);
+				output.flush();
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
+	}
+	
+	private void commandShutDown() {
+		try {
+			Runtime.getRuntime().exec("shutdown -s -t 3600");
+			synchronized (output) {
+				output.writeUTF("SHUTDOWN");
+				output.writeUTF("Máy tính sẽ được tắt sau 60 phút");
+				output.flush();
+			}
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	private void handleRemoteDesktop() {
         while (true) {
             try {
             	
@@ -97,7 +142,7 @@ public class ClientHandler implements Runnable{
                 byte[] imageBytes = baos.toByteArray();
                 
                 synchronized(output) {
-                    output.writeUTF("REMOTE_DESKTOP");  // Gửi mã định danh
+                    output.writeUTF("REMOTE_DESKTOP");  
                     output.writeInt(imageBytes.length);
                     output.write(imageBytes);
                     output.flush();
@@ -109,7 +154,35 @@ public class ClientHandler implements Runnable{
             }
         }
     }
-	 
+	private void killApp() {
+		try {
+			String appId = input.readUTF();
+	        System.out.println("Received kill request for app ID: " + appId);
+	        Process process = Runtime.getRuntime().exec("taskkill /F /PID " + appId);
+
+	        // Chờ lệnh taskkill hoàn thành
+	        int exitCode = process.waitFor();
+	        if (exitCode == 0) {
+	            System.out.println("App with ID " + appId + " was killed successfully.");
+	            
+	        } else {
+	            System.out.println("Failed to kill app with ID " + appId + ". Exit code: " + exitCode);
+	        }
+//	        synchronized (output) {
+//	        	List<String[]> apps = getRunningApps();
+//	             output.writeInt(apps.size());
+//	             for (String[] app : apps) {
+//	                 output.writeUTF(app[0]);  
+//	                 output.writeUTF(app[1]);  
+//	             }
+//	             output.flush();
+//			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
+		
+	}
     private void handleClientEvents() {
         try {
             Robot robot = new Robot();
@@ -167,8 +240,17 @@ public class ClientHandler implements Runnable{
                     	handleFileTransfer();
                     	break;
                     case "REQUEST_RUNNING_APPS":
-                    	sendRunningApps();
-                    	
+                    	sendRunningApps();                
+                    	break;
+                    case "KILL_APP":
+                    	killApp();
+//                    	sendRunningApps();
+                    	break;
+                    case "SCREEN_SHOT":
+                    	sendScreenShot();
+                    	break;
+                    case "SHUT_DOWN":
+                    	commandShutDown();
                     	break;
                 }
             }
