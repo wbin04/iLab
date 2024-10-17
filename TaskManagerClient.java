@@ -2,85 +2,59 @@ package Client;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-
-import java.net.*;
-import java.io.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.net.Socket;
 
-public class TaskManagerClient extends JFrame{
-	private JTable processTable;
-	private DefaultTableModel tableModel;
-	private Socket socket;
-	private DataInputStream dis;
-	private DataOutputStream dos;
-	
-	public TaskManagerClient() {
-		setTitle("Remote Task Manager");
-        setSize(600, 400);
+public class TaskManagerClient extends JFrame {
+    private JTable appTable;
+    private DefaultTableModel tableModel;
+
+    public TaskManagerClient() {
+        setTitle("Task Manager Client");
+        setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Tạo bảng với các cột "App Name" và "PID"
+        String[] columnNames = {"App Name", "PID"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        appTable = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(appTable);
         
-        try {
-			socket = new Socket("localhost", 2222);
-			this.dis = new DataInputStream(socket.getInputStream());
-			this.dos = new DataOutputStream(socket.getOutputStream());
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-        
-        tableModel = new DefaultTableModel(new Object[]{"PID", "Command", "User"}, 0);
-        processTable = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(processTable);
-        add(scrollPane);
-        
-        JButton killButton = new JButton("Kill Process");
-        add(killButton, BorderLayout.SOUTH);
-        
-        killButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = processTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    long pid = (long) tableModel.getValueAt(selectedRow, 0);
-                    killProcess(pid);
-                }
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Kết nối và tải dữ liệu từ server
+        connectToServer();
+    }
+
+    private void connectToServer() {
+        try (Socket socket = new Socket("localhost", 2222);
+             DataInputStream input = new DataInputStream(socket.getInputStream())) {
+
+            int appCount = input.readInt(); // Đọc số lượng ứng dụng
+
+            // Xóa bảng hiện tại
+            tableModel.setRowCount(0);
+
+            // Đọc và thêm dữ liệu ứng dụng vào bảng
+            for (int i = 0; i < appCount; i++) {
+                String appName = input.readUTF();
+                String appId = input.readUTF();
+                tableModel.addRow(new String[]{appName, appId});
             }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            TaskManagerClient client = new TaskManagerClient();
+            client.setVisible(true);
         });
-	}
-	// Lấy list process từ server
-	private void loadProcessList() {
-		try {
-			dos.writeUTF("LIST_PROCESSES");
-			dos.flush();
-			
-			int processCount = dis.readInt();
-			for(int i = 0; i < processCount; i++) {
-				long processId = dis.readLong();
-				String command = dis.readUTF();
-				String user = dis.readUTF();
-				tableModel.addRow(new Object[] {processId,command, user});
-			}
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-	}
-	
-	// Tắt ứng dụng
-	private void killProcess(long processId) {
-		try {
-			dos.writeUTF("KILL_PROCESS");
-			dos.writeLong(processId);
-			dos.flush();
-			JOptionPane.showMessageDialog(this, "Process " + processId + " terminated.");
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-	}
-	public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new TaskManagerClient().setVisible(true));
     }
 }
+

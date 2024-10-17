@@ -51,6 +51,12 @@ public class ClientListener extends JFrame{
 		
 		JMenuItem TransferFileMenu = new JMenuItem("Truyền file");
 		mnNewMenu.add(TransferFileMenu);
+		
+		JMenu mnNewMenu_1 = new JMenu("Tools");
+		menuBar.add(mnNewMenu_1);
+		
+		JMenuItem TaskManagerMenu = new JMenuItem("Task Manager");
+		mnNewMenu_1.add(TaskManagerMenu);
 		this.setVisible(true);
 		
 		TransferFileMenu.addActionListener(e -> {
@@ -61,20 +67,35 @@ public class ClientListener extends JFrame{
 				e1.printStackTrace();
 			}
 		});
+		
+		TaskManagerMenu.addActionListener(e -> {
+			try {
+				taskManager();
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		});
 	}
 	
-	  private void transferFile() throws IOException {
-	        // Hiển thị JFileChooser để người dùng chọn file
-	        JFileChooser fileChooser = new JFileChooser();
-	        int result = fileChooser.showOpenDialog(this);
-	        if (result == JFileChooser.APPROVE_OPTION) {
-	            File file = fileChooser.getSelectedFile();
-	           
-	            // Khởi tạo ClientFileSender và truyền file đã chọn
-	            new Thread(new ClientFileSender(soc, file)).start();
-	        }
-	    }
-
+	 private void transferFile() throws IOException {
+        // Hiển thị JFileChooser để người dùng chọn file
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+           
+            // Khởi tạo ClientFileSender và truyền file đã chọn
+            new Thread(new ClientFileSender(soc, file)).start();
+        }
+     }
+	
+	 private void taskManager() throws IOException {
+		 dos.writeUTF("REQUEST_RUNNING_APPS");
+			dos.flush();
+		 ClientTaskManager taskManagerClient = new ClientTaskManager(soc);
+		 new Thread(taskManagerClient).start();
+	 }
 	
 	public void startListening() {
 		new Thread(()->{
