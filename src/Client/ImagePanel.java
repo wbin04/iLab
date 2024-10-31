@@ -101,21 +101,33 @@ public class ImagePanel extends Canvas {
     }
 
     private void sendKeyEvent(KeyEvent e, String eventType) {
-    	try {
-		      String character = e.getCharacter();
-		      System.out.println(e.getCharacter() + "---" + e.getCode() + "---" + e.getCode().getCode());
-		      if (eventType.equals("KEY_TYPED") && !e.getCharacter().isEmpty()) {
-		    	  dos.writeUTF("KEY_TYPED");
-		    	  dos.writeUTF(character);
-		    	  dos.flush();
-		      } else if (eventType.equals("KEY_PRESSED") || eventType.equals("KEY_RELEASED")) {
-		            dos.writeUTF(eventType);
-		            dos.writeInt(e.getCode().getCode());
-		            dos.flush();
-		      }
-		  } catch (IOException ex) {
-		      ex.printStackTrace();
-		  }
+        try {
+            KeyCode code = e.getCode();
+            String character = e.getCharacter();
+            
+            if (eventType.equals("KEY_PRESS") || eventType.equals("KEY_RELEASE")) {
+                if (isSpecialKey(code)) {
+                    dos.writeUTF(eventType);
+                    dos.writeInt(code.getCode());
+                    dos.flush();
+                }
+            }
+            else if (eventType.equals("KEY_TYPED") && !character.isEmpty()) {
+                if (!isSpecialKey(code)) {
+                    dos.writeUTF("KEY_TYPED");
+                    dos.writeUTF(character);
+                    dos.flush();
+                }
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
+    private boolean isSpecialKey(KeyCode code) {
+        return code == KeyCode.BACK_SPACE || code == KeyCode.ENTER || code == KeyCode.TAB ||
+               code == KeyCode.CONTROL || code == KeyCode.DELETE ||
+               code == KeyCode.UP || code == KeyCode.DOWN || 
+               code == KeyCode.LEFT || code == KeyCode.RIGHT;
+    }
 }

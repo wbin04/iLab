@@ -387,32 +387,9 @@ public class ClientHandler implements Runnable{
         StringSelection selection = new StringSelection(text);
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
     }
-    
-    private String getClipboardContents() {
-        String result = "";
-        try {
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
-                result = (String) clipboard.getData(DataFlavor.stringFlavor); 
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
 
     
     private void pasteFromClipboard(Robot robot) {
-        String clipboardText = getClipboardContents();
-        System.out.println(clipboardText);
-        if (containsVietnameseCharacters(clipboardText)) {
-        	for (int i = 0; i < clipboardText.length(); i++) {
-              robot.keyPress(KeyEvent.VK_BACK_SPACE);
-              robot.keyRelease(KeyEvent.VK_BACK_SPACE);
-              robot.delay(50);
-          }
-        }
-
         robot.keyPress(KeyEvent.VK_CONTROL);
         robot.keyPress(KeyEvent.VK_V);
         robot.delay(50); 
@@ -420,18 +397,4 @@ public class ClientHandler implements Runnable{
         robot.keyRelease(KeyEvent.VK_CONTROL);
         robot.delay(50); 
     }
-
-    private boolean containsVietnameseCharacters(String text) {
-        for (char c : text.toCharArray()) {
-            if (isVietnameseCharacter(c)) {
-                return true; 
-            }
-        }
-        return false; 
-    }
-
-    private boolean isVietnameseCharacter(char c) {
-        return "áàảãạâấầẩẫậđêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữự".indexOf(c) != -1;
-    }
-
 }
