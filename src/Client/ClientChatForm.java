@@ -29,6 +29,8 @@ public class ClientChatForm implements Runnable{
     private DataOutputStream dos;
     private DataInputStream dis;
     private String name;
+    
+    private boolean isRunning = true;
 	
 	public ClientChatForm(Socket socketChat, String name) {
 		initializeUI();
@@ -88,18 +90,29 @@ public class ClientChatForm implements Runnable{
     
     private void receiveMessage() {
     	 try {
-             while (true) {
+             while (isRunning) {
                  String message = dis.readUTF(); 
                  System.out.println("Message in ClientChatForm: " + message);
                  if (message != null) {
-//                     if (!stage.isShowing()) {
-//                    	 Platform.runLater(() -> stage.show());
-//                     }
-                     chatArea.appendText("Server: " + message + "\n");
+                     if(message.equals("SERVER_CLOSED")) {
+                    	 chatArea.appendText("Server đã đóng!\n");
+                         isRunning = false;
+                     }
+                     else chatArea.appendText("Server: " + message + "\n");
                  }
              }
          } catch (Exception e) {
-             e.printStackTrace();
+        	 if (isRunning) {  
+                 e.printStackTrace();
+                 chatArea.appendText("Lỗi khi nhận tin nhắn: " + e.getMessage() + "\n");
+             }
+         } finally {
+             try {
+                 if (dis != null) dis.close();
+                 if (socket != null && !socket.isClosed()) socket.close();
+             } catch (IOException e) {
+                 e.printStackTrace();
+             }
          }
     }
     

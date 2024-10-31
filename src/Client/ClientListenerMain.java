@@ -11,11 +11,13 @@ public class ClientListenerMain {
 	private Socket socket;
 	private Socket socketChat;
 	private Socket socketRemote;
+	private Socket socketFile;
     private DataInputStream dis;
-    private DataInputStream disChat;
-    private DataInputStream disRemote;
-    private DataOutputStream dosChat;
     private DataOutputStream dos;
+    private DataInputStream disChat;
+    private DataOutputStream dosChat;
+    private DataInputStream disRemote;
+    private DataInputStream disFile;
     private String stt;
     private ClientChatForm clientChatForm;
     private ClientHandler clientHandler;
@@ -24,17 +26,19 @@ public class ClientListenerMain {
         	socket = new Socket(ipAddress, port);
         	socketChat = new Socket(ipAddress, port+1);
         	socketRemote = new Socket(ipAddress, port+2);
+        	socketFile = new Socket(ipAddress, port+3);
         	
             dis = new DataInputStream(socket.getInputStream());
-            disChat = new DataInputStream(socketChat.getInputStream());
-            disRemote = new DataInputStream(socketRemote.getInputStream());
-            dosChat = new DataOutputStream(socketChat.getOutputStream());
             dos = new DataOutputStream(socket.getOutputStream());
+            disChat = new DataInputStream(socketChat.getInputStream());
+            dosChat = new DataOutputStream(socketChat.getOutputStream());
+            disRemote = new DataInputStream(socketRemote.getInputStream());
+            disFile = new DataInputStream(socketFile.getInputStream());
             
             clientChatForm = new ClientChatForm(socketChat, name);
             new Thread(clientChatForm).start();
             
-            clientHandler = new ClientHandler(socketRemote);
+            clientHandler = new ClientHandler(socketRemote, socketFile);
 			new Thread(clientHandler).start();
 			
             this.stt = stt;

@@ -32,6 +32,7 @@ public class ServerClientPanel {
 	private Socket socket = null;
     private Socket socketChat = null;
     private Socket socketRemote = null;
+    private Socket socketFile = null;
     private DataOutputStream dosChat;
     private DataOutputStream dosRemote;
     ServerChatForm serverChatForm;
@@ -91,10 +92,11 @@ public class ServerClientPanel {
 	}
 
 
-	public void setSocketRemote(Socket socketRemote) {
+	public void setSocketRemote(Socket socketRemote, Socket socketFile) {
 		this.socketRemote = socketRemote;
+		this.socketFile = socketFile;
 		
-		clientListener = new ClientListener(this.socketRemote, controller.lbNum.getText());
+		clientListener = new ClientListener(this.socketRemote, this.socketFile, controller.lbNum.getText());
 		clientListener.startListening();
 	}
 	

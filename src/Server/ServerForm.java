@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,10 +47,14 @@ public class ServerForm extends Application {
     private Map<Integer, ServerClientPanel> clientFormsMap;private List<Socket> listSocket = new ArrayList<>();
     private List<Socket> listSocketChat = new ArrayList<>();
     private List<Socket> listSocketRemote = new ArrayList<>();
+    private List<Socket> listSocketFile = new ArrayList<>();
     private ServerSocket serverSocket;
     private ServerSocket serverSocketChat;
     private ServerSocket serverSocketRemote;
+    private ServerSocket serverSocketFile;
     private ServerForm controller;
+    
+    private boolean isRunning;
 
     public static void main(String[] args) {
         launch(args);
@@ -63,7 +68,7 @@ public class ServerForm extends Application {
             primaryStage.setTitle("ServerForm");
             primaryStage.setScene(new Scene(root, 1000, 600));
             primaryStage.setOnCloseRequest(event -> {
-//                closeServer(); 
+                closeServer(); 
                 System.exit(0); 
             });
             primaryStage.show();
@@ -71,7 +76,6 @@ public class ServerForm extends Application {
             controller = loader.getController();
             controller.setEvents();
         } catch (IOException e) {
-//        	System.out.println("ServerForm lỗi start: " + e.getMessage());
         	e.printStackTrace();
         }
     }
@@ -82,17 +86,16 @@ public class ServerForm extends Application {
         
         btnOpen.setOnAction(event -> {
         	try {
+        		isRunning = true;
+        		chatArea.setText("");
             	loadPanel();
             	startServerInBackground();
     		} catch (Exception e) {
-    			// TODO: handle exception
-//    			System.out.println("ServerForm loi initialize: " + e.getMessage());
     			e.printStackTrace();
     		}   	
         });
         btnClose.setOnAction(event -> {
-//        	ServerClientPanel clientPanel = clientFormsMap.get(3);
-//        	clientPanel.setName("aaa");
+        	closeServer();
         });
     }
     
@@ -103,28 +106,43 @@ public class ServerForm extends Application {
                 serverSocket = new ServerSocket(port);
                 serverSocketChat = new ServerSocket(port+1);
                 serverSocketRemote = new ServerSocket(port+2);
+                serverSocketFile = new ServerSocket(port+3);
 
                 chatArea.appendText("Server đang chờ kết nối...\n");
-                while (true) {
-                    Socket soc = serverSocket.accept();
-                    Socket socChat = serverSocketChat.accept();
-                    Socket socRemote = serverSocketRemote.accept();
-                    
-                    listSocket.add(soc);
-                    listSocketChat.add(socChat);
-                    listSocketRemote.add(socRemote);
+                while (isRunning) {
+                	try {
+                        Socket soc = serverSocket.accept();
+                        Socket socChat = serverSocketChat.accept();
+                        Socket socRemote = serverSocketRemote.accept();
+                        Socket socFile = serverSocketFile.accept();
 
-                    // Cập nhật UI phải thực hiện trong luồng JavaFX
-                    final Socket finalSoc = soc;
-                    final Socket finalSocChat = socChat;
-                    final Socket finalSocRemote = socRemote;
-                    javafx.application.Platform.runLater(() -> {
-                        refreshServerForm(finalSoc, finalSocChat, finalSocRemote);
-                    });
+                        listSocket.add(soc);
+                        listSocketChat.add(socChat);
+                        listSocketRemote.add(socRemote);
+                        listSocketFile.add(socFile);
+
+                        // Cập nhật UI phải thực hiện trong luồng JavaFX
+                        final Socket finalSoc = soc;
+                        final Socket finalSocChat = socChat;
+                        final Socket finalSocRemote = socRemote;
+                        final Socket finalSocFile = socFile;
+                        javafx.application.Platform.runLater(() -> {
+                            refreshServerForm(finalSoc, finalSocChat, finalSocRemote, finalSocFile);
+                        });
+                    } catch (SocketException e) {
+                        if (!isRunning) {
+                            System.out.println("Server không còn chấp nhận kết nối.");
+                            chatArea.appendText("Server không còn chấp nhận kết nối.\n");
+                        } else {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             } catch (IOException e) {
 //                System.out.println("ServerForm lỗi startServerInBackground: " + e.getMessage());
             	e.printStackTrace();
+            } finally {
+//                closeServer();
             }
         }).start();
     }
@@ -145,7 +163,7 @@ public class ServerForm extends Application {
 		tfEmpty.setText("10");
     }
     
-    private void refreshServerForm(Socket soc, Socket socketChat, Socket socketRemote) {
+    private void refreshServerForm(Socket soc, Socket socketChat, Socket socketRemote, Socket socketFile) {
     	DataInputStream dis;
 		try {
 			dis = new DataInputStream(soc.getInputStream());
@@ -161,16 +179,13 @@ public class ServerForm extends Application {
 //			clientPanel.setStatus();
 			clientPanel.setSocket(soc);
 			clientPanel.setSocketChat(socketChat);
-			clientPanel.setSocketRemote(socketRemote);
+			clientPanel.setSocketRemote(socketRemote, socketFile);
 			clientPanel.setEvents();
 			
 			tfConnected.setText("" + listSocket.size());
 			tfEmpty.setText("" + (10-listSocket.size()));
 			chatArea.appendText(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
 			System.out.println(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
-			
-//			serverPanel.revalidate();
-//			serverPanel.repaint();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -196,4 +211,66 @@ public class ServerForm extends Application {
             }
         }
     }
+    
+    private void closeServer() {
+        try {
+            isRunning = false;
+            
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+            if (serverSocketChat != null && !serverSocketChat.isClosed()) {
+                serverSocketChat.close();
+            }
+            if (serverSocketRemote != null && !serverSocketRemote.isClosed()) {
+                serverSocketRemote.close();
+            }
+
+            for (Socket socket : listSocket) {
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                }
+            }
+            for (Socket socketChat : listSocketChat) {
+                if (socketChat != null && !socketChat.isClosed()) {
+                	try {
+                        DataOutputStream dos = new DataOutputStream(socketChat.getOutputStream());
+                        dos.writeUTF("SERVER_CLOSED");
+                        dos.flush();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        System.out.println("Lỗi đóng socketChat ServerForm");
+                        chatArea.appendText("Lỗi đóng socketChat ServerForm\n");
+                    }
+                }
+            }
+            for (Socket socketRemote : listSocketRemote) {
+                if (socketRemote != null && !socketRemote.isClosed()) {
+                	try {
+                        DataOutputStream dos = new DataOutputStream(socketRemote.getOutputStream());
+                        dos.writeUTF("SERVER_CLOSED");
+                        dos.flush();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        System.out.println("Lỗi đóng socketRemote ServerForm");
+                        chatArea.appendText("Lỗi đóng socketRemote ServerForm\n");
+                    }
+                }
+            }
+
+            javafx.application.Platform.runLater(() -> {
+                chatArea.appendText("Server đã được đóng.\n");
+                listSocket.clear();
+                listSocketChat.clear();
+                listSocketRemote.clear();
+                tfConnected.setText("0");
+                tfEmpty.setText("0");
+                clientContainer.getChildren().clear();
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+            chatArea.appendText("Lỗi khi đóng server: " + e.getMessage() + "\n");
+        }
+    }
+    	
 }

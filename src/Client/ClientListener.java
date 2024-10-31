@@ -20,17 +20,23 @@ import javax.imageio.ImageIO;
 public class ClientListener {
 	int off = 50;
 	private Socket soc;
-	private Dimension serverScreenSize;
     private DataOutputStream dos;
     private DataInputStream dis;
+    private Socket socFile;
+    private DataOutputStream dosFile;
+    private DataInputStream disFile;
+	private Dimension serverScreenSize;
     private ImagePanel imagePanel;
     private Stage stage;
 
-	public ClientListener(Socket socket, String stt) {
+	public ClientListener(Socket socket, Socket socketFile, String stt) {
 		try {
 			soc = socket;
 			dis = new DataInputStream(soc.getInputStream());
 			dos = new DataOutputStream(soc.getOutputStream());
+			socFile = socketFile;
+			disFile = new DataInputStream(socFile.getInputStream());
+			dosFile = new DataOutputStream(socFile.getOutputStream());
 			int serverWidth = dis.readInt();
 			int serverHeight = dis.readInt();
 			serverScreenSize = new Dimension(serverWidth, serverHeight);
@@ -95,7 +101,7 @@ public class ClientListener {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
-            new Thread(new ClientFileSender(soc, file)).start();
+            new Thread(new ClientFileSender(socFile, file)).start();
         }
     }
 	

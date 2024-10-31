@@ -26,7 +26,7 @@ public class ClientFileSender implements Runnable{
 		// TODO Auto-generated method stub
 		try {
 			FileInputStream fileIn = new FileInputStream(file);
-			dos.writeUTF("TRANSFER_FILE");
+//			dos.writeUTF("TRANSFER_FILE");
 			dos.writeUTF(file.getName());
 			dos.writeLong(file.length());
 			System.out.println("Đang gửi file: " + file.getName());

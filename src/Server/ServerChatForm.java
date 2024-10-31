@@ -2,6 +2,7 @@ package Server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -28,7 +29,7 @@ public class ServerChatForm implements Runnable{
 	private Socket socket;
 	private DataInputStream dis;
 	private DataOutputStream dos;
-	boolean isChatFormOn = false;
+	private boolean isRunning = true;
 	
 	public void set(Socket socketChat, String stt) {
 	    try {
@@ -84,16 +85,40 @@ public class ServerChatForm implements Runnable{
         }
 	}
 	
-	 private void receiveMessage() {
-       	 try {
-             while (true) {
-                String message = dis.readUTF(); 
-                chatArea.appendText(message + "\n"); // ten client + message
-             }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-       }
+	private void receiveMessage() {
+	    try {
+	        while (isRunning) {
+	            if (dis.available() > 0) {
+	                String message = dis.readUTF();
+	                System.out.println("Message in ClientChatForm: " + message);
+	                if (message != null) {
+	                    if (message.equals("SERVER_CLOSED")) {
+	                        chatArea.appendText("Server đã đóng!\n");
+	                        isRunning = false;
+	                    } else {
+	                        chatArea.appendText("Server: " + message + "\n");
+	                    }
+	                }
+	            }
+	        }
+	    } catch (EOFException eofEx) {
+	        chatArea.appendText("Kết nối đã bị đóng.\n");
+	        isRunning = false;
+	    } catch (IOException e) {
+	        if (isRunning) {
+	            e.printStackTrace();
+	            chatArea.appendText("Lỗi khi nhận tin nhắn: " + e.getMessage() + "\n");
+	        }
+	    } finally {
+	        try {
+	            if (dis != null) dis.close();
+	            if (socket != null && !socket.isClosed()) socket.close();
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+	    }
+	}
+
 	 
 	@Override
 	public void run() {

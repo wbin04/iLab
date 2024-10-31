@@ -41,7 +41,7 @@ public class ClientTaskManager extends JFrame {
         try {
 			this.socket = socket;
 			this.dis = new DataInputStream(socket.getInputStream());
-			System.out.println(socket.getInetAddress());
+//			System.out.println(socket.getInetAddress());
 			this.dos = new DataOutputStream(socket.getOutputStream());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

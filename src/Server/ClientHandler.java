@@ -19,16 +19,24 @@ import java.io.*;
 public class ClientHandler implements Runnable{
 	private String id;
 	private Socket socket;
+	private Socket socketFile;
 	
 	private DataInputStream input;
 	private DataOutputStream output;
 	
-	public ClientHandler(Socket socket) {
+	private DataInputStream inputFile;
+	private DataOutputStream outputFile;
+	
+	public ClientHandler(Socket socket, Socket socketFile) {
 		this.socket = socket;
+		this.socketFile = socketFile;
 		this.id = "1";
 		try {
 			this.input = new DataInputStream(socket.getInputStream());
 			this.output = new DataOutputStream(socket.getOutputStream());
+			
+			this.inputFile = new DataInputStream(socketFile.getInputStream());
+			this.outputFile = new DataOutputStream(socketFile.getOutputStream());
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -58,7 +66,7 @@ public class ClientHandler implements Runnable{
          // Them luong chat vao day
          new Thread(this::handleClientEvents).start();
          new Thread(this::handleRemoteDesktop).start();
-
+         new Thread(this::handleFileTransfer).start();
 		//List apps
 		
 	}
@@ -303,9 +311,9 @@ public class ClientHandler implements Runnable{
                             break;
 
 
-                        case "TRANSFER_FILE":
-                        	handleFileTransfer();
-                        	break;
+//                        case "TRANSFER_FILE":
+//                        	handleFileTransfer();
+//                        	break;
                         case "REQUEST_RUNNING_APPS":
                         	sendRunningApps();                
                         	break;
@@ -329,58 +337,62 @@ public class ClientHandler implements Runnable{
     }
     
     private void handleFileTransfer() {
-    	try {
-			String fileName = input.readUTF();
-			long fileSize = input.readLong();
-			
-			System.out.println("Receiving file: " + fileName + ", size: " + fileSize + " bytes");
-			
-			String path = "D:/Remote/File";
-//			String path = "C:/Users/Administrator/Downloads/Remote/File";
-			File directory = new File(path);
-			if (!directory.exists()) {
-	            if (directory.mkdirs()) {
-	                System.out.println("Thư mục đã được tạo thành công: " + path);
-	            } else {
-	                System.out.println("Không thể tạo thư mục: " + path);
-	            }
-	        } else {
-	            System.out.println("Thư mục đã tồn tại: " + path);
-	        }
-			
-			File file = new File(path + "/receive_" + fileName);
-	        int count = 1;
-	        String newFileName = fileName;
+    	while(true) {
+    		try {
+//        		String eventType = inputFile.readUTF();
+//        		System.out.println("handleFile " + eventType);
+    			String fileName = inputFile.readUTF();
+    			long fileSize = inputFile.readLong();
+    			
+    			System.out.println("Receiving file: " + fileName + ", size: " + fileSize + " bytes");
+    			
+    			String path = "D:/Remote/File";
+//    			String path = "C:/Users/Administrator/Downloads/Remote/File";
+    			File directory = new File(path);
+    			if (!directory.exists()) {
+    	            if (directory.mkdirs()) {
+    	                System.out.println("Thư mục đã được tạo thành công: " + path);
+    	            } else {
+    	                System.out.println("Không thể tạo thư mục: " + path);
+    	            }
+    	        } else {
+    	            System.out.println("Thư mục đã tồn tại: " + path);
+    	        }
+    			
+    			File file = new File(path + "/receive_" + fileName);
+    	        int count = 1;
+    	        String newFileName = fileName;
 
-	        while (file.exists()) {
-	            int dotIndex = fileName.lastIndexOf(".");
-	            if (dotIndex != -1) {
-	                newFileName = fileName.substring(0, dotIndex) + "(" + count + ")" + fileName.substring(dotIndex);
-	            } else {
-	                newFileName = fileName + "(" + count + ")";
-	            }
-	            file = new File(path + "/receive_" + newFileName);
-	            count++;
-	        }
-			
-			FileOutputStream fileOut = new FileOutputStream(file);
-			
-			
-			byte[] buffer = new byte[8192];
-			int bytesRead;
-			long totalBytesRead = 0;
-			
-			while (totalBytesRead < fileSize && (bytesRead = input.read(buffer, 0, (int) Math.min(buffer.length, fileSize - totalBytesRead))) != -1) {
-			    fileOut.write(buffer, 0, bytesRead);
-			    totalBytesRead += bytesRead;
-			}
+    	        while (file.exists()) {
+    	            int dotIndex = fileName.lastIndexOf(".");
+    	            if (dotIndex != -1) {
+    	                newFileName = fileName.substring(0, dotIndex) + "(" + count + ")" + fileName.substring(dotIndex);
+    	            } else {
+    	                newFileName = fileName + "(" + count + ")";
+    	            }
+    	            file = new File(path + "/receive_" + newFileName);
+    	            count++;
+    	        }
+    			
+    			FileOutputStream fileOut = new FileOutputStream(file);
+    			
+    			
+    			byte[] buffer = new byte[8192];
+    			int bytesRead;
+    			long totalBytesRead = 0;
+    			
+    			while (totalBytesRead < fileSize && (bytesRead = inputFile.read(buffer, 0, (int) Math.min(buffer.length, fileSize - totalBytesRead))) != -1) {
+    			    fileOut.write(buffer, 0, bytesRead);
+    			    totalBytesRead += bytesRead;
+    			}
 
-			fileOut.close();
-			System.out.println("File " + fileName + " đã nhận được thành công");
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
+    			fileOut.close();
+    			System.out.println("File " + fileName + " đã nhận được thành công");
+    		} catch (Exception e) {
+    			// TODO: handle exception
+    			e.printStackTrace();
+    		}
+    	}
     }
     
     private void setClipboardContents(String text) {

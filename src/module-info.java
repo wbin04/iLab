@@ -5,6 +5,7 @@ module iLabFX {
 	requires javafx.swing;
 	requires java.desktop;
 	requires java.datatransfer;
+	requires javafx.base;
 	
 	opens Server to javafx.graphics, javafx.fxml;
 	opens Client to javafx.graphics, javafx.fxml;
