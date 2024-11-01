@@ -18,25 +18,28 @@ import java.net.*;
 import java.io.*;
 public class ClientHandler implements Runnable{
 	private String id;
-	private Socket socket;
+	private Socket socketRemote;
 	private Socket socketFile;
 	
-	private DataInputStream input;
-	private DataOutputStream output;
+	private DataInputStream disRemote;
+	private DataOutputStream dosRemote;
 	
-	private DataInputStream inputFile;
-	private DataOutputStream outputFile;
+	private DataInputStream disFile;
+	private DataOutputStream dosFile;
+	
+	private boolean isRunning;
 	
 	public ClientHandler(Socket socket, Socket socketFile) {
-		this.socket = socket;
+		this.socketRemote = socket;
 		this.socketFile = socketFile;
 		this.id = "1";
+		this.isRunning = true;
 		try {
-			this.input = new DataInputStream(socket.getInputStream());
-			this.output = new DataOutputStream(socket.getOutputStream());
+			this.disRemote = new DataInputStream(socket.getInputStream());
+			this.dosRemote = new DataOutputStream(socket.getOutputStream());
 			
-			this.inputFile = new DataInputStream(socketFile.getInputStream());
-			this.outputFile = new DataOutputStream(socketFile.getOutputStream());
+			this.disFile = new DataInputStream(socketFile.getInputStream());
+			this.dosFile = new DataOutputStream(socketFile.getOutputStream());
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -56,9 +59,9 @@ public class ClientHandler implements Runnable{
 		// TODO Auto-generated method stub
 		 Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
          try {
-			output.writeInt(screenSize.width);
-			output.writeInt(screenSize.height);
-	        output.flush();
+			dosRemote.writeInt(screenSize.width);
+			dosRemote.writeInt(screenSize.height);
+			dosRemote.flush();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -99,16 +102,16 @@ public class ClientHandler implements Runnable{
 	
 	private void sendRunningApps() {
 	    try {
-	    	 synchronized(output) {
-	             output.writeUTF("TASK_MANAGER");  // Gửi mã định danh trước
+	    	 synchronized(dosRemote) {
+	    		 dosRemote.writeUTF("TASK_MANAGER");  // Gửi mã định danh trước
 	             
 	             List<String[]> apps = getRunningApps();
-	             output.writeInt(apps.size());  // Gửi số lượng ứng dụng
+	             dosRemote.writeInt(apps.size());  // Gửi số lượng ứng dụng
 	             for (String[] app : apps) {
-	                 output.writeUTF(app[0]);  // Gửi tên ứng dụng
-	                 output.writeUTF(app[1]);  // Gửi ID ứng dụng
+	            	 dosRemote.writeUTF(app[0]);  // Gửi tên ứng dụng
+	            	 dosRemote.writeUTF(app[1]);  // Gửi ID ứng dụng
 	             }
-	             output.flush();
+	             dosRemote.flush();
 	         }
 	        
 	    } catch (IOException e) {
@@ -118,7 +121,7 @@ public class ClientHandler implements Runnable{
 	
 	private void sendScreenShot() {
 		try {
-			synchronized(output) {
+			synchronized(dosRemote) {
 				Robot r = new Robot();
 				Rectangle rectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
 				BufferedImage img = r.createScreenCapture(rectangle);
@@ -126,10 +129,10 @@ public class ClientHandler implements Runnable{
 				ImageIO.write(img, "png", baos);
 				byte[] imageBytes = baos.toByteArray();
 				
-				output.writeUTF("SCREENSHOT");
-				output.writeInt(imageBytes.length);
-				output.write(imageBytes);
-				output.flush();
+				dosRemote.writeUTF("SCREENSHOT");
+				dosRemote.writeInt(imageBytes.length);
+				dosRemote.write(imageBytes);
+				dosRemote.flush();
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -139,9 +142,9 @@ public class ClientHandler implements Runnable{
 	
 	public void sendMessage(String message) {
 		try {
-			synchronized(output) {
-				output.writeUTF(message);
-				output.flush();
+			synchronized(dosRemote) {
+				dosRemote.writeUTF(message);
+				dosRemote.flush();
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -150,7 +153,7 @@ public class ClientHandler implements Runnable{
 	
 	public void receiveMessage() {
 		try {
-			String message = input.readUTF();
+			String message = disRemote.readUTF();
 			System.out.println(message + "\n");
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -160,10 +163,10 @@ public class ClientHandler implements Runnable{
 	private void commandShutDown() {
 		try {
 			Runtime.getRuntime().exec("shutdown -s -t 3600");
-			synchronized (output) {
-				output.writeUTF("SHUTDOWN");
-				output.writeUTF("Máy tính sẽ được tắt sau 60 phút");
-				output.flush();
+			synchronized (dosRemote) {
+				dosRemote.writeUTF("SHUTDOWN");
+				dosRemote.writeUTF("Máy tính sẽ được tắt sau 60 phút");
+				dosRemote.flush();
 			}
 			
 		} catch (Exception e) {
@@ -171,7 +174,7 @@ public class ClientHandler implements Runnable{
 		}
 	}
 	private void handleRemoteDesktop() {
-        while (true) {
+        while (isRunning) {
             try {
             	
                 Robot r = new Robot();
@@ -181,43 +184,32 @@ public class ClientHandler implements Runnable{
                 ImageIO.write(img, "png", baos);
                 byte[] imageBytes = baos.toByteArray();
                 
-                synchronized(output) {
-                    output.writeUTF("REMOTE_DESKTOP");  
-                    output.writeInt(imageBytes.length);
-                    output.write(imageBytes);
-                    output.flush();
+                if (socketRemote != null && !socketRemote.isClosed()) {
+                    synchronized (dosRemote) {
+                    	dosRemote.writeUTF("REMOTE_DESKTOP");  
+                    	dosRemote.writeInt(imageBytes.length);
+                    	dosRemote.write(imageBytes);
+                    	dosRemote.flush();
+                    }
                 }
+
 
                 Thread.sleep(50);
             
             } catch (SocketException e) {
-                System.out.println("handleRemoteDesktop ClientHandler Socket closed: " + e.getMessage());
-                try {
-                    if (!socket.isClosed()) {
-                        socket.close();
-                        break;
-                    }
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
+//                System.out.println("handleRemoteDesktop ClientHandler Socket closed: " + e.getMessage());
+            	e.printStackTrace();
+                break;
             } catch (Exception e) {
 //                e.printStackTrace();
             	System.out.println("Lỗi handleRemoteDesktop ClientHandler");
-            	try {
-                    if (!socket.isClosed()) {
-                        socket.close();
-                        break;
-                    }
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-
+            	break;
             }
         }
     }
 	private void killApp() {
 		try {
-			String appId = input.readUTF();
+			String appId = disRemote.readUTF();
 	        System.out.println("Received kill request for app ID: " + appId);
 	        Process process = Runtime.getRuntime().exec("taskkill /F /PID " + appId);
 
@@ -250,17 +242,17 @@ public class ClientHandler implements Runnable{
 //            robot.setAutoDelay(50);
 //            robot.setAutoWaitForIdle(true);
 
-            while (true) {
-                if(input.available() > 0) {
-                	String eventType = input.readUTF();
+            while (isRunning) {
+                if(disRemote.available() > 0) {
+                	String eventType = disRemote.readUTF();
                     System.out.println("input: " + eventType);
                     if(eventType.equals("REQUEST_RUNNING_APPS")) System.out.println("eventType la : " + eventType);
                     switch (eventType) {
                         case "MOUSE_PRESS":
                         case "MOUSE_RELEASE":
-                            int x = input.readInt();
-                            int y = input.readInt();
-                            int button = input.readInt();
+                            int x = disRemote.readInt();
+                            int y = disRemote.readInt();
+                            int button = disRemote.readInt();
                             System.out.println("MOUSE_PRESS to: (" + x + ", " + y + ") with button " + button);
                             int mask = button == 1 ? InputEvent.BUTTON1_DOWN_MASK :
                                        button == 2 ? InputEvent.BUTTON2_DOWN_MASK :
@@ -275,27 +267,27 @@ public class ClientHandler implements Runnable{
                             break;
 
                         case "MOUSE_MOVE":
-                            x = input.readInt();
-                            y = input.readInt();
+                            x = disRemote.readInt();
+                            y = disRemote.readInt();
                             System.out.println("MOUSE_MOVE to: (" + x + ", " + y + ")");
                             robot.mouseMove(x, y);
                             break;
                             
                         case "MOUSE_DRAGGED":
-                            x = input.readInt();
-                            y = input.readInt();
+                            x = disRemote.readInt();
+                            y = disRemote.readInt();
                             System.out.println("MOUSE_DRAGGED to: (" + x + ", " + y + ")");
                             robot.mouseMove(x, y);
                             break;    
                         
                         case "MOUSE_WHEEL":
-                            int wheelAmt = input.readInt();
+                            int wheelAmt = disRemote.readInt();
                             robot.mouseWheel(wheelAmt);       
                             break;    	
                             
                         case "KEY_PRESS":
                         case "KEY_RELEASE":
-                            int keyCode = input.readInt();
+                            int keyCode = disRemote.readInt();
                             if (eventType.equals("KEY_PRESS")) {
                                 robot.keyPress(keyCode);
                             } else {
@@ -304,7 +296,7 @@ public class ClientHandler implements Runnable{
                             break;
                             
                         case "KEY_TYPED":
-                            String text = input.readUTF();
+                            String text = disRemote.readUTF();
                             setClipboardContents(text);
                             robot.delay(50);
                             pasteFromClipboard(robot);
@@ -327,22 +319,36 @@ public class ClientHandler implements Runnable{
                         case "SHUT_DOWN":
                         	commandShutDown();
                         	break;
+                        case "SERVER_CLOSED":
+                        	isRunning = false;
+                            closeAllConnections();
+                            break;
                     }
                     
                 }
             }
+        } catch (EOFException e) {
+            System.out.println("End of stream reached. Closing connection.");
+            isRunning = false;
+            closeAllConnections();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
     
     private void handleFileTransfer() {
-    	while(true) {
+    	while(isRunning) {
     		try {
 //        		String eventType = inputFile.readUTF();
 //        		System.out.println("handleFile " + eventType);
-    			String fileName = inputFile.readUTF();
-    			long fileSize = inputFile.readLong();
+    			String fileName = disFile.readUTF();
+    			
+    			if(fileName.equals("SERVER_CLOSED")) {
+    				isRunning = false;
+    			    closeAllConnections();
+    				break;
+    			}
+    			long fileSize = disFile.readLong();
     			
     			System.out.println("Receiving file: " + fileName + ", size: " + fileSize + " bytes");
     			
@@ -381,7 +387,7 @@ public class ClientHandler implements Runnable{
     			int bytesRead;
     			long totalBytesRead = 0;
     			
-    			while (totalBytesRead < fileSize && (bytesRead = inputFile.read(buffer, 0, (int) Math.min(buffer.length, fileSize - totalBytesRead))) != -1) {
+    			while (totalBytesRead < fileSize && (bytesRead = disFile.read(buffer, 0, (int) Math.min(buffer.length, fileSize - totalBytesRead))) != -1) {
     			    fileOut.write(buffer, 0, bytesRead);
     			    totalBytesRead += bytesRead;
     			}
@@ -409,4 +415,18 @@ public class ClientHandler implements Runnable{
         robot.keyRelease(KeyEvent.VK_CONTROL);
         robot.delay(50); 
     }
+    
+    private void closeAllConnections() {
+        try {
+            if (disRemote != null) disRemote.close();
+            if (dosRemote != null) dosRemote.close();
+            if (socketRemote != null && !socketRemote.isClosed()) socketRemote.close();
+            if (disFile != null) disFile.close();
+            if (dosFile != null) dosFile.close();
+            if (socketFile != null && !socketFile.isClosed()) socketFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

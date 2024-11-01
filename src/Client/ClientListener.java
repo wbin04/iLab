@@ -19,26 +19,26 @@ import javax.imageio.ImageIO;
 
 public class ClientListener {
 	int off = 50;
-	private Socket soc;
-    private DataOutputStream dos;
-    private DataInputStream dis;
-    private Socket socFile;
+	private Socket socketRemote;
+    private DataOutputStream dosRemote;
+    private DataInputStream disRemote;
+    private Socket socketFile;
     private DataOutputStream dosFile;
     private DataInputStream disFile;
 	private Dimension serverScreenSize;
     private ImagePanel imagePanel;
     private Stage stage;
 
-	public ClientListener(Socket socket, Socket socketFile, String stt) {
+	public ClientListener(Socket socketRemote, Socket socketFile, String stt) {
 		try {
-			soc = socket;
-			dis = new DataInputStream(soc.getInputStream());
-			dos = new DataOutputStream(soc.getOutputStream());
-			socFile = socketFile;
-			disFile = new DataInputStream(socFile.getInputStream());
-			dosFile = new DataOutputStream(socFile.getOutputStream());
-			int serverWidth = dis.readInt();
-			int serverHeight = dis.readInt();
+			this.socketRemote = socketRemote;
+			disRemote = new DataInputStream(socketRemote.getInputStream());
+			dosRemote = new DataOutputStream(socketRemote.getOutputStream());
+			this.socketFile = socketFile;
+			disFile = new DataInputStream(socketFile.getInputStream());
+			dosFile = new DataOutputStream(socketFile.getOutputStream());
+			int serverWidth = disRemote.readInt();
+			int serverHeight = disRemote.readInt();
 			serverScreenSize = new Dimension(serverWidth, serverHeight);
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -66,7 +66,7 @@ public class ClientListener {
 
         menuBar.getMenus().addAll(fileMenu, toolsMenu);
 
-        imagePanel = new ImagePanel(soc, serverScreenSize);
+        imagePanel = new ImagePanel(socketRemote, serverScreenSize);
         imagePanel.setWidth(800);
         imagePanel.setHeight(600);
 
@@ -101,7 +101,7 @@ public class ClientListener {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
-            new Thread(new ClientFileSender(socFile, file)).start();
+            new Thread(new ClientFileSender(socketFile, file)).start();
         }
     }
 	
@@ -111,8 +111,8 @@ public class ClientListener {
 	
 	private void sendCommand(String command) {
         try {
-            dos.writeUTF(command);
-            dos.flush();
+            dosRemote.writeUTF(command);
+            dosRemote.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -120,9 +120,9 @@ public class ClientListener {
 
 	private void takeScreenShot() {
 		try {
-			int len = dis.readInt();
+			int len = disRemote.readInt();
 			byte tmp[] = new byte[len];
-			dis.readFully(tmp);
+			disRemote.readFully(tmp);
 			ByteArrayInputStream bais = new ByteArrayInputStream(tmp);
 			BufferedImage img2 = ImageIO.read(bais);
 			
@@ -156,13 +156,20 @@ public class ClientListener {
 		new Thread(()->{
 			try {
 				while(true) {
-					String messageType = dis.readUTF();
+					String messageType;
+					try {
+	                    messageType = disRemote.readUTF();
+	                } catch (EOFException e) {
+	                    System.out.println("Server đã đóng kết nối (EOF).");
+	                    closeConnections();
+	                    break;
+	                }
 //					System.out.println("MessageType: " + messageType);
 					switch(messageType) {
 						case "REMOTE_DESKTOP": 
-							int len = dis.readInt();
+							int len = disRemote.readInt();
 							byte tmp[] = new byte[len];
-							dis.readFully(tmp);
+							disRemote.readFully(tmp);
 							ByteArrayInputStream bais = new ByteArrayInputStream(tmp);
 							BufferedImage img2 = ImageIO.read(bais);
 							
@@ -170,11 +177,15 @@ public class ClientListener {
 							Thread.sleep(50);
 							break;
 						case "TASK_MANAGER":
-							new ClientTaskManager(soc);
+							new ClientTaskManager(socketRemote);
 							break;
 						case "SCREENSHOT":
 							takeScreenShot();
 							break;
+						case "SERVER_CLOSED": 
+	                        System.out.println("Server đã đóng kết nối.");
+	                        closeConnections();
+	                        return;
 						}			
 				}
 			} catch (Exception e) {
@@ -182,5 +193,19 @@ public class ClientListener {
 				e.printStackTrace();
 			}
 		}).start();
+	}
+	
+	private void closeConnections() {
+	    try {
+	        if (disRemote != null) disRemote.close();
+	        if (dosRemote != null) dosRemote.close();
+	        if (socketRemote != null && !socketRemote.isClosed()) socketRemote.close();
+	        if (disFile != null) disFile.close();
+	        if (dosFile != null) dosFile.close();
+	        if (socketFile != null && !socketFile.isClosed()) socketFile.close();
+	        System.out.println("Tất cả kết nối đã được đóng.");
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
 	}
 }

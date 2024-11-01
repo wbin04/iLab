@@ -5,6 +5,7 @@ import java.util.*;
 import javax.swing.SwingUtilities;
 
 import Server.ClientHandler;
+import javafx.stage.Stage;
 
 import java.io.*;
 public class ClientListenerMain {
@@ -21,7 +22,8 @@ public class ClientListenerMain {
     private String stt;
     private ClientChatForm clientChatForm;
     private ClientHandler clientHandler;
-    public ClientListenerMain(String ipAddress, int port, String name, String stt) {
+//    private Stage 
+    public ClientListenerMain(String ipAddress, int port, String name, String stt, Stage stage) {
         try {
         	socket = new Socket(ipAddress, port);
         	socketChat = new Socket(ipAddress, port+1);
@@ -35,7 +37,7 @@ public class ClientListenerMain {
             disRemote = new DataInputStream(socketRemote.getInputStream());
             disFile = new DataInputStream(socketFile.getInputStream());
             
-            clientChatForm = new ClientChatForm(socketChat, name);
+            clientChatForm = new ClientChatForm(socketChat, name, stage);
             new Thread(clientChatForm).start();
             
             clientHandler = new ClientHandler(socketRemote, socketFile);

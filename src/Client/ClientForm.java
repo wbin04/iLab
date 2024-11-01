@@ -57,9 +57,9 @@ public class ClientForm extends Application {
     		String stt = (String)cbbNum.getValue();
     		
     		try {
-				ClientListenerMain clientListenerMain = new ClientListenerMain(ip, port, name, stt);
 				Stage stage = (Stage) btnConnect.getScene().getWindow(); 
 	            stage.hide();
+				ClientListenerMain clientListenerMain = new ClientListenerMain(ip, port, name, stt, stage);
 			} catch (Exception e2) {
 				// TODO: handle exception
 				System.out.println("Loi btnConnect ClientLoginForm");

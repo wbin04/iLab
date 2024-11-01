@@ -29,16 +29,17 @@ public class ClientChatForm implements Runnable{
     private DataOutputStream dos;
     private DataInputStream dis;
     private String name;
-    
+    private Stage clientFormStage;
     private boolean isRunning = true;
 	
-	public ClientChatForm(Socket socketChat, String name) {
+	public ClientChatForm(Socket socketChat, String name, Stage clientFormStage) {
 		initializeUI();
 		try {
 			this.socket = socketChat;
 			this.dos = new DataOutputStream(socket.getOutputStream());
 			this.dis = new DataInputStream(socket.getInputStream());
 			this.name = name;
+			this.clientFormStage = clientFormStage;
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -108,6 +109,11 @@ public class ClientChatForm implements Runnable{
              }
          } finally {
              try {
+            	 Platform.runLater(() -> {
+                	 Stage stage = (Stage) btnSend.getScene().getWindow(); 
+     	             stage.hide();
+            		 clientFormStage.show();
+            	 });
                  if (dis != null) dis.close();
                  if (socket != null && !socket.isClosed()) socket.close();
              } catch (IOException e) {

@@ -225,6 +225,9 @@ public class ServerForm extends Application {
             if (serverSocketRemote != null && !serverSocketRemote.isClosed()) {
                 serverSocketRemote.close();
             }
+            if (serverSocketFile != null && !serverSocketFile.isClosed()) {
+            	serverSocketFile.close();
+            }
 
             for (Socket socket : listSocket) {
                 if (socket != null && !socket.isClosed()) {
@@ -248,6 +251,19 @@ public class ServerForm extends Application {
                 if (socketRemote != null && !socketRemote.isClosed()) {
                 	try {
                         DataOutputStream dos = new DataOutputStream(socketRemote.getOutputStream());
+                        dos.writeUTF("SERVER_CLOSED");
+                        dos.flush();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        System.out.println("Lỗi đóng socketRemote ServerForm");
+                        chatArea.appendText("Lỗi đóng socketRemote ServerForm\n");
+                    }
+                }
+            }
+            for (Socket socketFile : listSocketFile) {
+                if (socketFile != null && !socketFile.isClosed()) {
+                	try {
+                        DataOutputStream dos = new DataOutputStream(socketFile.getOutputStream());
                         dos.writeUTF("SERVER_CLOSED");
                         dos.flush();
                     } catch (IOException e1) {
