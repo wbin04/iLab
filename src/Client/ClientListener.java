@@ -22,9 +22,12 @@ public class ClientListener {
 	private Socket socketRemote;
     private DataOutputStream dosRemote;
     private DataInputStream disRemote;
+    
     private Socket socketFile;
     private DataOutputStream dosFile;
     private DataInputStream disFile;
+    
+    private String stt;
 	private Dimension serverScreenSize;
     private ImagePanel imagePanel;
     private Stage stage;
@@ -34,9 +37,13 @@ public class ClientListener {
 			this.socketRemote = socketRemote;
 			disRemote = new DataInputStream(socketRemote.getInputStream());
 			dosRemote = new DataOutputStream(socketRemote.getOutputStream());
+			
 			this.socketFile = socketFile;
 			disFile = new DataInputStream(socketFile.getInputStream());
 			dosFile = new DataOutputStream(socketFile.getOutputStream());
+			
+			this.stt = stt;
+			
 			int serverWidth = disRemote.readInt();
 			int serverHeight = disRemote.readInt();
 			serverScreenSize = new Dimension(serverWidth, serverHeight);
@@ -127,7 +134,6 @@ public class ClientListener {
 			BufferedImage img2 = ImageIO.read(bais);
 			
 			String path = "D:/Remote/ScreenShot";
-//			String path = "C:/Users/Administrator/Downloads/Remote/ScreenShot";
 			File directory = new File(path);
 			if (!directory.exists()) {
 	            if (directory.mkdirs()) {
@@ -143,7 +149,7 @@ public class ClientListener {
 	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
 	        String datetime = now.format(formatter);
 			
-			File outputFile = new File(path + "/screenshot_" + datetime + ".png");
+			File outputFile = new File(path + "/screenshot_MaySo" + stt + "_" + datetime + ".png");
 			ImageIO.write(img2, "png", outputFile);
 			System.out.println("Screenshot sent");
 		} catch (IOException e) {
