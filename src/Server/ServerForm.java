@@ -4,9 +4,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.file.attribute.DosFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,14 +17,18 @@ import java.util.Map;
 
 import Client.ClientFileSender;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -42,7 +48,9 @@ public class ServerForm extends Application {
     @FXML
     private Button btnClose;
     @FXML
-    private TextArea chatArea;
+    private ScrollPane scrollPane;
+    @FXML
+    private TextFlow chatArea;
     @FXML
     private TextField chatField;
     @FXML
@@ -83,12 +91,17 @@ public class ServerForm extends Application {
 
             controller = loader.getController();
             controller.setEvents();
+            controller.setStatus(true);
         } catch (IOException e) {
         	e.printStackTrace();
         }
     }
 
     private void setEvents() {
+    	chatArea.heightProperty().addListener((observable, oldValue, newValue) -> {
+    	    scrollPane.setVvalue(1.0); 
+    	});
+
     	btnSend.setOnAction(event -> sendMessage());
         chatField.setOnAction(event -> sendMessage());
         btnFile.setOnAction(event -> sendFile());
@@ -96,15 +109,17 @@ public class ServerForm extends Application {
         btnOpen.setOnAction(event -> {
         	try {
         		isRunning = true;
-        		chatArea.setText("");
+        		chatArea.getChildren().clear();
             	loadPanel();
             	startServerInBackground();
+            	setStatus(false);
     		} catch (Exception e) {
     			e.printStackTrace();
     		}   	
         });
         btnClose.setOnAction(event -> {
         	closeServer();
+        	setStatus(true);
         });
     }
     
@@ -117,7 +132,15 @@ public class ServerForm extends Application {
                 serverSocketRemote = new ServerSocket(port+2);
                 serverSocketFile = new ServerSocket(port+3);
 
-                chatArea.appendText("Server đang chờ kết nối...\n");
+                Platform.runLater(() -> {
+					try {
+						chatArea.getChildren().add(new Text("Server tại địa chỉ " + InetAddress.getLocalHost().getHostAddress() + " cổng " + port + " đang chờ kết nối...\n"));
+						scrollPane.setVvalue(1.0);
+					} catch (UnknownHostException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				});
                 while (isRunning) {
                 	try {
                         Socket soc = serverSocket.accept();
@@ -141,7 +164,7 @@ public class ServerForm extends Application {
                     } catch (SocketException e) {
                         if (!isRunning) {
                             System.out.println("Server không còn chấp nhận kết nối.");
-                            chatArea.appendText("Server không còn chấp nhận kết nối.\n");
+                            appendText("Server không còn chấp nhận kết nối.\n");
                         } else {
                             e.printStackTrace();
                         }
@@ -216,7 +239,7 @@ public class ServerForm extends Application {
 			
 			tfConnected.setText("" + listSocket.size());
 			tfEmpty.setText("" + (10-listSocket.size()));
-			chatArea.appendText(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
+			appendText(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
 			System.out.println(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
 	        
 	        clientConnected.put(stt, true);
@@ -227,6 +250,24 @@ public class ServerForm extends Application {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+    }
+    
+    private void setStatus(boolean status) {
+    	tfPort.setEditable(status);
+    	tfNum.setEditable(status);
+    	btnOpen.setDisable(!status);
+    	btnClose.setDisable(status);
+    	btnFile.setDisable(status);
+    	btnSend.setDisable(status);
+    	chatField.setEditable(!status);
+    }
+    
+    private void appendText(String msg) {
+    	Platform.runLater(() -> {
+    	    chatArea.getChildren().add(new Text(msg)); 
+    	    scrollPane.setVvalue(1.0);
+    	});
+
     }
     
     private void sendMessage() {
@@ -245,7 +286,7 @@ public class ServerForm extends Application {
             }
 
             chatField.setText("");
-            chatArea.appendText("Bạn: " + msg + "\n");
+            appendText("Bạn: " + msg + "\n");
         }
     }
     
@@ -258,7 +299,7 @@ public class ServerForm extends Application {
                 new Thread(new ClientFileSender(listSocketChat.get(i), listSocketFile.get(i), file)).start();
             }
     	}
-    	chatArea.appendText("Bạn đã gửi file: " + file.getName() + "\n");
+    	if (file != null) appendText("Bạn đã gửi file: " + file.getName() + "\n");
     }
     
     private void closeServer() {
@@ -292,7 +333,7 @@ public class ServerForm extends Application {
                     } catch (IOException e1) {
                         e1.printStackTrace();
                         System.out.println("Lỗi đóng socketChat ServerForm");
-                        chatArea.appendText("Lỗi đóng socketChat ServerForm\n");
+                        appendText("Lỗi đóng socketChat ServerForm\n");
                     }
                 }
             }
@@ -305,7 +346,7 @@ public class ServerForm extends Application {
                     } catch (IOException e1) {
                         e1.printStackTrace();
                         System.out.println("Lỗi đóng socketRemote ServerForm");
-                        chatArea.appendText("Lỗi đóng socketRemote ServerForm\n");
+                        appendText("Lỗi đóng socketRemote ServerForm\n");
                     }
                 }
             }
@@ -318,13 +359,13 @@ public class ServerForm extends Application {
                     } catch (IOException e1) {
                         e1.printStackTrace();
                         System.out.println("Lỗi đóng socketRemote ServerForm");
-                        chatArea.appendText("Lỗi đóng socketRemote ServerForm\n");
+                        appendText("Lỗi đóng socketFile ServerForm\n");
                     }
                 }
             }
 
             javafx.application.Platform.runLater(() -> {
-                chatArea.appendText("Server đã được đóng.\n");
+            	appendText("Server đã được đóng.\n");
                 listSocket.clear();
                 listSocketChat.clear();
                 listSocketRemote.clear();
@@ -334,7 +375,7 @@ public class ServerForm extends Application {
             });
         } catch (IOException e) {
             e.printStackTrace();
-            chatArea.appendText("Lỗi khi đóng server: " + e.getMessage() + "\n");
+            appendText("Lỗi khi đóng server: " + e.getMessage() + "\n");
         }
     }
     	

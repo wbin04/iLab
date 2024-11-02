@@ -11,13 +11,17 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 
 public class ClientChatForm implements Runnable{
 	@FXML
-	private TextArea chatArea;
+    private ScrollPane scrollPane;
+	@FXML
+	private TextFlow chatArea;
 	@FXML
 	private TextField chatField;
 	@FXML
@@ -82,7 +86,7 @@ public class ClientChatForm implements Runnable{
                 dos.writeUTF(name + ": " +message); 
                 dos.flush();  
                 chatField.setText(""); 
-                chatArea.appendText("You: " + message + "\n");
+                appendText("You: " + message + "\n");
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -96,22 +100,25 @@ public class ClientChatForm implements Runnable{
                  System.out.println("Message in ClientChatForm: " + message);
                  if (message != null) {
                      if(message.equals("SERVER_CLOSED")) {
-                    	 chatArea.appendText("Server đã đóng!\n");
+                    	 appendText("Server đã đóng!\n");
                          isRunning = false;
                      }
+                     else if (message.startsWith("REMOTE:")) {
+                         appendText("Server đang xem màn hình của bạn!\n");
+                     }
                      else if (message.startsWith("FILE:")) {
-                         String fileInfo = message.substring(5);
-                         chatArea.appendText("Server đã gửi file: " + fileInfo + " tại thư mục D:/Remote/File\n");
+                         String fileName = message.substring(5);
+                         appendText("Server đã gửi file: " + fileName + " tại thư mục D:/Remote/File\n");
                      } 
                      else {
-                         chatArea.appendText("Server: " + message + "\n");
+                         appendText("Server: " + message + "\n");
                      }
                  }
              }
          } catch (Exception e) {
         	 if (isRunning) {  
                  e.printStackTrace();
-                 chatArea.appendText("Lỗi khi nhận tin nhắn: " + e.getMessage() + "\n");
+                 appendText("Lỗi khi nhận tin nhắn: " + e.getMessage() + "\n");
              }
          } finally {
              try {
@@ -133,4 +140,11 @@ public class ClientChatForm implements Runnable{
 		// TODO Auto-generated method stub
 		receiveMessage();
 	}
+	
+	private void appendText(String msg) {
+    	Platform.runLater(() -> {
+    	    chatArea.getChildren().add(new Text(msg)); 
+    	    scrollPane.setVvalue(1.0);
+    	});
+    }
 }

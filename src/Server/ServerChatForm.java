@@ -6,19 +6,23 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 
-import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 
 public class ServerChatForm implements Runnable{
 	@FXML
-	private TextArea chatArea;
+    private ScrollPane scrollPane;
+	@FXML
+	private TextFlow chatArea;
 	@FXML
 	private TextField chatField;
 	@FXML
@@ -78,7 +82,7 @@ public class ServerChatForm implements Runnable{
                 dos.flush();  
                 System.out.println("Send successfully");
                 chatField.setText(""); 
-                chatArea.appendText("Bạn: " + message + "\n");
+                appendText("Bạn: " + message + "\n");
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -93,21 +97,21 @@ public class ServerChatForm implements Runnable{
 	                System.out.println("Message in ClientChatForm: " + message);
 	                if (message != null) {
 	                    if (message.equals("SERVER_CLOSED")) {
-	                        chatArea.appendText("Server đã đóng!\n");
+	                        appendText("Server đã đóng!\n");
 	                        isRunning = false;
 	                    } else {
-	                        chatArea.appendText("Server: " + message + "\n");
+	                        appendText("Server: " + message + "\n");
 	                    }
 	                }
 	            }
 	        }
 	    } catch (EOFException eofEx) {
-	        chatArea.appendText("Kết nối đã bị đóng.\n");
+	        appendText("Kết nối đã bị đóng.\n");
 	        isRunning = false;
 	    } catch (IOException e) {
 	        if (isRunning) {
 	            e.printStackTrace();
-	            chatArea.appendText("Lỗi khi nhận tin nhắn: " + e.getMessage() + "\n");
+	            appendText("Lỗi khi nhận tin nhắn: " + e.getMessage() + "\n");
 	        }
 	    } finally {
 	        try {
@@ -125,4 +129,11 @@ public class ServerChatForm implements Runnable{
 		// TODO Auto-generated method stub
 		receiveMessage();
 	}
+	
+	private void appendText(String msg) {
+    	Platform.runLater(() -> {
+    	    chatArea.getChildren().add(new Text(msg)); 
+    	    scrollPane.setVvalue(1.0);
+    	});
+    }
 }

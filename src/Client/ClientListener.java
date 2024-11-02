@@ -104,6 +104,14 @@ public class ClientListener {
 	public void showView() {
 	    if (stage != null) {
 	        stage.show();
+	        try {
+				DataOutputStream dosChat = new DataOutputStream(socketChat.getOutputStream());
+				dosChat.writeUTF("REMOTE:");
+				dosChat.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	    } else {
 	        System.out.println("Stage is null, cannot show chat form.");
 	    }
