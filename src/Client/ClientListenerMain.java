@@ -5,6 +5,7 @@ import java.util.*;
 import javax.swing.SwingUtilities;
 
 import Server.ClientHandler;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 
 import java.io.*;
@@ -22,7 +23,7 @@ public class ClientListenerMain {
     private String stt;
     private ClientChatForm clientChatForm;
     private ClientHandler clientHandler;
-//    private Stage 
+
     public ClientListenerMain(String ipAddress, int port, String name, String stt, Stage stage) {
         try {
         	socket = new Socket(ipAddress, port);
@@ -37,16 +38,42 @@ public class ClientListenerMain {
             disRemote = new DataInputStream(socketRemote.getInputStream());
             disFile = new DataInputStream(socketFile.getInputStream());
             
-            clientChatForm = new ClientChatForm(socketChat, name, stage);
-            new Thread(clientChatForm).start();
             
-            clientHandler = new ClientHandler(socketRemote, socketFile);
-			new Thread(clientHandler).start();
 			
             this.stt = stt;
 //            System.out.println("Client: " + stt + ", " + name);
             dos.writeUTF(stt + "," + name);
             dos.flush();
+            
+            String msg = dis.readUTF();
+            if(msg.equals("FALSE")) {
+            	clientChatForm = new ClientChatForm(socketChat, name, stage);
+                new Thread(clientChatForm).start();
+                
+                clientHandler = new ClientHandler(socketRemote, socketFile);
+    			new Thread(clientHandler).start();
+    			
+    			Platform.runLater(() -> {
+    				stage.hide();
+    			});
+            }
+            else {
+            	System.out.println("May da duoc chon");
+            	
+            	dis.close();
+            	dos.close();
+            	disChat.close();
+            	dosChat.close();
+            	disRemote.close();
+            	disFile.close();
+            	
+            	socket.close();
+            	socketChat.close();
+            	socketRemote.close();
+            	socketFile.close();
+            	
+            	return;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

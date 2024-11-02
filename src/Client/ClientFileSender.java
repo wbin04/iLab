@@ -8,12 +8,16 @@ import java.net.Socket;
 
 public class ClientFileSender implements Runnable{
 	File file;
+	Socket socketChat;
+	DataOutputStream dosChat;
 	Socket socketFile;
 	DataOutputStream dosFile;
-	public ClientFileSender(Socket socket, File file) {
+	public ClientFileSender(Socket socketChat, Socket socketFile, File file) {
 		try {
-			this.socketFile = socket;
 			this.file = file;
+			this.socketChat = socketChat;
+			this.dosChat = new DataOutputStream(socketChat.getOutputStream());
+			this.socketFile = socketFile;
 			this.dosFile = new DataOutputStream(socketFile.getOutputStream());
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -38,6 +42,7 @@ public class ClientFileSender implements Runnable{
 			}
 			dosFile.flush();
 			fileIn.close();
+			dosChat.writeUTF("FILE:" + file.getName());
 			System.out.println("File đã được gửi thành công.");
 		} catch (Exception e) {
 			// TODO: handle exception

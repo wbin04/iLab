@@ -2,15 +2,18 @@ package Server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.file.attribute.DosFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import Client.ClientFileSender;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -20,6 +23,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class ServerForm extends Application {
@@ -43,8 +47,12 @@ public class ServerForm extends Application {
     private TextField chatField;
     @FXML
     private Button btnSend;
+    @FXML
+    private Button btnFile;
     
-    private Map<Integer, ServerClientPanel> clientFormsMap;private List<Socket> listSocket = new ArrayList<>();
+    private Map<Integer, ServerClientPanel> clientFormsMap;
+    private Map<Integer, Boolean> clientConnected;
+    private List<Socket> listSocket = new ArrayList<>();
     private List<Socket> listSocketChat = new ArrayList<>();
     private List<Socket> listSocketRemote = new ArrayList<>();
     private List<Socket> listSocketFile = new ArrayList<>();
@@ -83,6 +91,7 @@ public class ServerForm extends Application {
     private void setEvents() {
     	btnSend.setOnAction(event -> sendMessage());
         chatField.setOnAction(event -> sendMessage());
+        btnFile.setOnAction(event -> sendFile());
         
         btnOpen.setOnAction(event -> {
         	try {
@@ -150,6 +159,7 @@ public class ServerForm extends Application {
     private void loadPanel() throws IOException {
         clientContainer.getChildren().clear(); 
         clientFormsMap = new HashMap<>();
+        clientConnected = new HashMap<>();
         
         for (int i = 1; i <= 10; i++) {
         	
@@ -157,7 +167,12 @@ public class ServerForm extends Application {
         	clientContainer.getChildren().add(clientPanel.getPanel(i));
         	
         	clientFormsMap.put(i, clientPanel);
+        	clientConnected.put(i, false);
         }
+        
+//        for (int n : clientFormsMap.keySet()) {
+//        	 System.out.println(n + " " + clientConnected.get(n));
+//        }
         
         tfConnected.setText("0");
 		tfEmpty.setText("10");
@@ -172,11 +187,28 @@ public class ServerForm extends Application {
 			String[] parts = msg.split(",");
 	        int stt = Integer.parseInt(parts[0]);
 	        String name = parts[1];
-	        
+
+        	DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
+	        if(!clientConnected.get(stt)) {
+	        	dos.writeUTF("FALSE");
+	        }
+	        else {
+	        	dos.writeUTF("TRUE");
+	        	
+	        	dis.close();
+	        	dos.close();
+	        	soc.close();
+	        	socketChat.close();
+	        	socketRemote.close();
+	        	socketFile.close();
+	        	
+	        	return;
+	        }
+
 			ServerClientPanel clientPanel = clientFormsMap.get(stt); // tìm ra được clientPanel, cấp cho nó 1 socket, ban đầu khởi tạo bằng NULL
 			clientPanel.setIP("IP: "+soc.getInetAddress().getLocalHost().getHostAddress());
 			clientPanel.setName("Họ tên: " + name);
-//			clientPanel.setStatus();
+			clientPanel.setStatus(true);
 			clientPanel.setSocket(soc);
 			clientPanel.setSocketChat(socketChat);
 			clientPanel.setSocketRemote(socketRemote, socketFile);
@@ -186,6 +218,11 @@ public class ServerForm extends Application {
 			tfEmpty.setText("" + (10-listSocket.size()));
 			chatArea.appendText(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
 			System.out.println(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
+	        
+	        clientConnected.put(stt, true);
+//	        for (int n : clientFormsMap.keySet()) {
+//	        	 System.out.println(n + " " + clientConnected.get(n));
+//	        }
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -200,16 +237,28 @@ public class ServerForm extends Application {
                     DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
                     dos.writeUTF(msg);
                     dos.flush();
-
-                    chatField.setText("");
-                    chatArea.appendText("Server: " + msg + "\n");
                 } catch (IOException e1) {
                     e1.printStackTrace();
                     System.out.println("Lỗi gửi tin nhắn tổng ServerForm");
-                    chatArea.appendText("Lỗi gửi tin nhắn tổng ServerForm\n");
+//                    chatArea.appendText("Lỗi gửi tin nhắn tổng ServerForm\n");
                 }
             }
+
+            chatField.setText("");
+            chatArea.appendText("Bạn: " + msg + "\n");
         }
+    }
+    
+    private void sendFile() {
+    	Stage stage = (Stage) btnFile.getScene().getWindow(); 
+		FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showOpenDialog(stage);
+    	for(int i=0; i<listSocketFile.size(); i++) {
+            if (file != null) {
+                new Thread(new ClientFileSender(listSocketChat.get(i), listSocketFile.get(i), file)).start();
+            }
+    	}
+    	chatArea.appendText("Bạn đã gửi file: " + file.getName() + "\n");
     }
     
     private void closeServer() {

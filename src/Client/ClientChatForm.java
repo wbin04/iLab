@@ -99,7 +99,13 @@ public class ClientChatForm implements Runnable{
                     	 chatArea.appendText("Server đã đóng!\n");
                          isRunning = false;
                      }
-                     else chatArea.appendText("Server: " + message + "\n");
+                     else if (message.startsWith("FILE:")) {
+                         String fileInfo = message.substring(5);
+                         chatArea.appendText("Server đã gửi file: " + fileInfo + " tại thư mục D:/Remote/File\n");
+                     } 
+                     else {
+                         chatArea.appendText("Server: " + message + "\n");
+                     }
                  }
              }
          } catch (Exception e) {

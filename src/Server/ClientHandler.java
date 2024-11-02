@@ -327,8 +327,12 @@ public class ClientHandler implements Runnable{
                     
                 }
             }
-        } catch (EOFException e) {
-            System.out.println("End of stream reached. Closing connection.");
+        } catch (SocketException e) {
+            System.out.println("SocketException");
+            isRunning = false;
+            closeAllConnections();
+        }  catch (EOFException e) {
+            System.out.println("EOFException");
             isRunning = false;
             closeAllConnections();
         } catch (Exception e) {

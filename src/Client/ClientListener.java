@@ -19,6 +19,9 @@ import javax.imageio.ImageIO;
 
 public class ClientListener {
 	int off = 50;
+	
+	private Socket socketChat;
+	
 	private Socket socketRemote;
     private DataOutputStream dosRemote;
     private DataInputStream disRemote;
@@ -32,8 +35,10 @@ public class ClientListener {
     private ImagePanel imagePanel;
     private Stage stage;
 
-	public ClientListener(Socket socketRemote, Socket socketFile, String stt) {
+	public ClientListener(Socket socketChat, Socket socketRemote, Socket socketFile, String stt) {
 		try {
+			this.socketChat = socketChat;
+						
 			this.socketRemote = socketRemote;
 			disRemote = new DataInputStream(socketRemote.getInputStream());
 			dosRemote = new DataOutputStream(socketRemote.getOutputStream());
@@ -104,11 +109,15 @@ public class ClientListener {
 	    }
 	}
 	
+	public void showFolder() {
+		transferFile();
+	}
+	
 	private void transferFile() {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
-            new Thread(new ClientFileSender(socketFile, file)).start();
+            new Thread(new ClientFileSender(socketChat, socketFile, file)).start();
         }
     }
 	

@@ -35,6 +35,7 @@ public class ServerClientPanel {
     private Socket socketFile = null;
     private DataOutputStream dosChat;
     private DataOutputStream dosRemote;
+    private DataOutputStream dosFile;
     ServerChatForm serverChatForm;
     ClientListener clientListener;
 	
@@ -47,7 +48,8 @@ public class ServerClientPanel {
 
         controller = loader.getController();
         setNumMachine(stt);
-
+        setStatus(false);
+        
         return clientPanel;
 	}
 	
@@ -63,20 +65,15 @@ public class ServerClientPanel {
 		controller.lbName.setText(name);
 	}
 	
-	public Socket getSocket() {
-		return socket;
+	public void setStatus(boolean status) {
+		controller.btnChat.setVisible(status);
+		controller.btnView.setVisible(status);
+		controller.btnFile.setVisible(status);
 	}
-
 
 	public void setSocket(Socket socket) {
 		this.socket = socket;
 	}
-
-
-	public Socket getSocketChat() {
-		return socketChat;
-	}
-
 
 	public void setSocketChat(Socket socketChat) {
 		this.socketChat = socketChat;
@@ -86,17 +83,11 @@ public class ServerClientPanel {
     	new Thread(serverChatForm).start();
 	}
 
-
-	public Socket getSocketRemote() {
-		return socketRemote;
-	}
-
-
 	public void setSocketRemote(Socket socketRemote, Socket socketFile) {
 		this.socketRemote = socketRemote;
 		this.socketFile = socketFile;
 		
-		clientListener = new ClientListener(this.socketRemote, this.socketFile, controller.lbNum.getText());
+		clientListener = new ClientListener(this.socketChat, this.socketRemote, this.socketFile, controller.lbNum.getText());
 		clientListener.startListening();
 	}
 	
@@ -115,6 +106,16 @@ public class ServerClientPanel {
 				dosRemote = new DataOutputStream(this.socketRemote.getOutputStream());  
 //				dosRemote.writeUTF("REMOTE_DESKTOP");
 				clientListener.showView();
+			} catch (Exception e2) {
+				// TODO: handle exception
+				e2.printStackTrace();
+			}
+		});
+		controller.btnFile.setOnAction(event -> {
+	    	try {
+				dosFile = new DataOutputStream(this.socketFile.getOutputStream());  
+//				dosRemote.writeUTF("REMOTE_DESKTOP");
+				clientListener.showFolder();
 			} catch (Exception e2) {
 				// TODO: handle exception
 				e2.printStackTrace();
