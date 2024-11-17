@@ -1,106 +1,171 @@
 package Client;
 
-import java.net.*;
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.*;
-import java.util.*;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.stage.Stage;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableModel;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ClientTaskManager extends JFrame {
-	private JTable processTable;
-	private DefaultTableModel tableModel;
-	private Socket socket;
-	private DataInputStream dis;
-	private DataOutputStream dos;
-	private JButton killButton;
-	public ClientTaskManager(Socket socket) {
-		setSize(400, 300);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setLayout(new BorderLayout());
-		
-		String[] columnNames = {"Name App", "ID App"};
-		
-		tableModel = new DefaultTableModel(columnNames, 0);
-        processTable = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(processTable);
-        add(scrollPane, BorderLayout.CENTER);
-        
-        killButton = new JButton("Kill App");
-        add(killButton, BorderLayout.SOUTH);
-        setVisible(true);
-		
+public class ClientTaskManager extends Stage {
+    @FXML
+    private TableView<AppInfo> tableView;
+    @FXML
+    private TableColumn<AppInfo, String> nameColumn;
+    @FXML
+    private TableColumn<AppInfo, String> idColumn;
+    @FXML
+    private Button btnClose;
+
+    private ObservableList<AppInfo> appList;
+    private Socket socketTM;
+    private DataInputStream disTM;
+    private DataOutputStream dosTM;
+    
+    private boolean isRunning = false;
+
+    public ClientTaskManager(Socket socketTM) {
+        this.socketTM = socketTM;
+        appList = FXCollections.observableArrayList();
+        isRunning = true;
+
         try {
-			this.socket = socket;
-			this.dis = new DataInputStream(socket.getInputStream());
-//			System.out.println(socket.getInetAddress());
-			this.dos = new DataOutputStream(socket.getOutputStream());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        receiveRunningApps();
-        
-        killButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                killSelectedApp();
-            }
-        });
-	}
-	
-	public void killSelectedApp() {
-		int selectedRow = processTable.getSelectedRow();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("ClientTaskManager.fxml"));
+            loader.setController(this);
+            Scene scene = new Scene(loader.load());
+            setScene(scene);
+            setTitle("Client Task Manager");
 
-        if (selectedRow != -1) {         
-            String appId = (String) tableModel.getValueAt(selectedRow, 1);
-            try {     
-                dos.writeUTF("KILL_APP");
-                dos.writeUTF(appId);
-                dos.flush();
+            initializeSockets();
+            initializeTable();
+            receiveRunningApps();
+            
+            this.setOnCloseRequest(event -> {
+                this.hide(); 
+                event.consume(); 
+            });
+
+            this.setResizable(false);
+//            this.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            showError("Lỗi khởi tạo UI: " + e.getMessage());
+        }
+    }
+
+    private void initializeSockets() {
+        try {
+            this.disTM = new DataInputStream(this.socketTM.getInputStream());
+            this.dosTM = new DataOutputStream(this.socketTM.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+            showError("Lỗi khởi tạo socket.");
+        }
+    }
+
+    private void initializeTable() {
+        nameColumn.setCellValueFactory(data -> data.getValue().nameProperty());
+        idColumn.setCellValueFactory(data -> data.getValue().idProperty());
+
+        nameColumn.setResizable(false);
+        idColumn.setResizable(false);
+
+        tableView.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+
+        tableView.setItems(appList);
+
+        btnClose.setOnAction(e -> killSelectedApp());
+    }
+
+
+    private void killSelectedApp() {
+        AppInfo selectedApp = tableView.getSelectionModel().getSelectedItem();
+
+        if (selectedApp != null) {
+            String appId = selectedApp.getId();
+            try {
+//                dosRemote.writeUTF("KILL_APP");
+                dosTM.writeUTF(appId);
+                dosTM.flush();
                 System.out.println("Kill request sent for app ID: " + appId);
-                //receiveRunningApps();
             } catch (IOException e) {
                 e.printStackTrace();
+                showError("Lỗi gửi yêu cầu đóng ứng dụng.");
             }
-        } else {           
-            JOptionPane.showMessageDialog(this, "Please select an app to kill.");
+        } else {
+            showError("Hãy chọn 1 ứng dụng để đóng.");
         }
-	}
-	public void receiveRunningApps() {
-		try {
-			synchronized(dis) {
-				int appCount = dis.readInt();
-				
-				System.out.println("appCount la : " + appCount);
+    }
 
-				List<String[]> apps = new ArrayList<>();
-				tableModel.setRowCount(0);
-				for(int i = 0; i < appCount; i++) {
-					System.out.println("Round " + i +": ");
-					String appName = dis.readUTF();
-					String appId = dis.readUTF();
-					System.out.println(appName + " ------ " + appId);
-					apps.add(new String[] {appName, appId});
-				}
-				
-				
-			    for (String[] app : apps) {
-			        tableModel.addRow(app);
-			    }		
-			}
-			
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-	}
+    private void receiveRunningApps() {
+        new Thread(() -> {
+            try {
+                while(isRunning) {
+                	int appCount = disTM.readInt();
+                    List<AppInfo> apps = new ArrayList<>();
+                    for (int i = 0; i < appCount; i++) {
+                        String appName = disTM.readUTF();
+                        String appId = disTM.readUTF();
+                        if (appName != null && !appName.isEmpty() && appId != null && !appId.isEmpty()) {
+                            apps.add(new AppInfo(appName, appId));
+                        }
+                    }
+
+                    Platform.runLater(() -> {
+                        appList.clear();
+                        appList.addAll(apps);
+                    });
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+//                Platform.runLater(() -> showError("Lỗi nhận danh sách ứng dụng."));
+            }
+        }).start();
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Lỗi");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    public static class AppInfo {
+        private final StringProperty name;
+        private final StringProperty id;
+
+        public AppInfo(String name, String id) {
+            this.name = new SimpleStringProperty(name);
+            this.id = new SimpleStringProperty(id);
+        }
+
+        public String getName() {
+            return name.get();
+        }
+
+        public StringProperty nameProperty() {
+            return name;
+        }
+
+        public String getId() {
+            return id.get();
+        }
+
+        public StringProperty idProperty() {
+            return id;
+        }
+    }
 }

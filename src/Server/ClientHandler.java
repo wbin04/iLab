@@ -1,25 +1,22 @@
 package Server;
 
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.lang.ProcessHandle;
-import java.lang.ProcessHandle.Info;
 import javax.imageio.ImageIO;
 
 import java.net.*;
 import java.io.*;
+
 public class ClientHandler implements Runnable{
 	private String id;
 	private Socket socketRemote;
 	private Socket socketFile;
+	private Socket socketTM;
 	
 	private DataInputStream disRemote;
 	private DataOutputStream dosRemote;
@@ -27,11 +24,15 @@ public class ClientHandler implements Runnable{
 	private DataInputStream disFile;
 	private DataOutputStream dosFile;
 	
+	private DataInputStream disTM;
+	private DataOutputStream dosTM;
+	
 	private boolean isRunning;
 	
-	public ClientHandler(Socket socket, Socket socketFile) {
+	public ClientHandler(Socket socket, Socket socketFile, Socket socketTM) {
 		this.socketRemote = socket;
 		this.socketFile = socketFile;
+		this.socketTM = socketTM;
 		this.id = "1";
 		this.isRunning = true;
 		try {
@@ -40,6 +41,9 @@ public class ClientHandler implements Runnable{
 			
 			this.disFile = new DataInputStream(socketFile.getInputStream());
 			this.dosFile = new DataOutputStream(socketFile.getOutputStream());
+			
+			this.disTM = new DataInputStream(socketTM.getInputStream());
+			this.dosTM = new DataOutputStream(socketTM.getOutputStream());
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -70,6 +74,8 @@ public class ClientHandler implements Runnable{
          new Thread(this::handleClientEvents).start();
          new Thread(this::handleRemoteDesktop).start();
          new Thread(this::handleFileTransfer).start();
+         new Thread(this::sendRunningApps).start();
+         new Thread(this::killApp).start(); 
 		//List apps
 		
 	}
@@ -101,22 +107,29 @@ public class ClientHandler implements Runnable{
     }
 	
 	private void sendRunningApps() {
-	    try {
-	    	 synchronized(dosRemote) {
-	    		 dosRemote.writeUTF("TASK_MANAGER");  // Gửi mã định danh trước
-	             
-	             List<String[]> apps = getRunningApps();
-	             dosRemote.writeInt(apps.size());  // Gửi số lượng ứng dụng
-	             for (String[] app : apps) {
-	            	 dosRemote.writeUTF(app[0]);  // Gửi tên ứng dụng
-	            	 dosRemote.writeUTF(app[1]);  // Gửi ID ứng dụng
-	             }
-	             dosRemote.flush();
-	         }
-	        
-	    } catch (IOException e) {
-	        e.printStackTrace();
-	    }
+//	    while(isRunning) {
+	    	try {
+//		    	 synchronized(dosTM) {
+		    		 dosRemote.writeUTF("TASK_MANAGER");  
+		             int preSize = 0;
+		             while(isRunning) {
+		            	 List<String[]> apps = getRunningApps();
+			             if(apps.size() != preSize) {
+			            	 dosTM.writeInt(apps.size());  
+				             for (String[] app : apps) {
+				            	 dosTM.writeUTF(app[0]);  
+				            	 dosTM.writeUTF(app[1]);  
+				             }
+				             dosTM.flush();
+				             preSize = apps.size();
+			             }
+		             }
+//		         }
+		        
+		    } catch (IOException e) {
+		        e.printStackTrace();
+		    }
+//	    }
 	}
 	
 	private void sendScreenShot() {
@@ -146,15 +159,6 @@ public class ClientHandler implements Runnable{
 				dosRemote.writeUTF(message);
 				dosRemote.flush();
 			}
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-	}
-	
-	public void receiveMessage() {
-		try {
-			String message = disRemote.readUTF();
-			System.out.println(message + "\n");
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
@@ -208,31 +212,29 @@ public class ClientHandler implements Runnable{
         }
     }
 	private void killApp() {
-		try {
-			String appId = disRemote.readUTF();
-	        System.out.println("Received kill request for app ID: " + appId);
-	        Process process = Runtime.getRuntime().exec("taskkill /F /PID " + appId);
+		System.out.println(111);
+		while(isRunning) {
+			try {
+				System.out.println(111);
+				String appId = disTM.readUTF();
+		        System.out.println("Received kill request for app ID: " + appId);
+		        Process process = Runtime.getRuntime().exec("taskkill /F /PID " + appId);
 
-	        // Chờ lệnh taskkill hoàn thành
-	        int exitCode = process.waitFor();
-	        if (exitCode == 0) {
-	            System.out.println("App with ID " + appId + " was killed successfully.");
-	            
-	        } else {
-	            System.out.println("Failed to kill app with ID " + appId + ". Exit code: " + exitCode);
-	        }
-//	        synchronized (output) {
-//	        	List<String[]> apps = getRunningApps();
-//	             output.writeInt(apps.size());
-//	             for (String[] app : apps) {
-//	                 output.writeUTF(app[0]);  
-//	                 output.writeUTF(app[1]);  
-//	             }
-//	             output.flush();
-//			}
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
+		        // Chờ lệnh taskkill hoàn thành
+		        int exitCode = process.waitFor();
+		        if (exitCode == 0) {
+		            System.out.println("App with ID " + appId + " was killed successfully.");
+		            
+		        } else {
+		            System.out.println("Failed to kill app with ID " + appId + ". Exit code: " + exitCode);
+		        }
+			} catch (SocketException e) {
+	            System.out.println("err killapp");
+	            closeAllConnections();
+	        } catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
 		}
 		
 	}
@@ -306,13 +308,16 @@ public class ClientHandler implements Runnable{
 //                        case "TRANSFER_FILE":
 //                        	handleFileTransfer();
 //                        	break;
-                        case "REQUEST_RUNNING_APPS":
-                        	sendRunningApps();                
-                        	break;
-                        case "KILL_APP":
-                        	killApp();
+//                        case "REQUEST_RUNNING_APPS":
+//                        	new Thread(this::sendRunningApps).start();  
+//                        	new Thread(this::killApp).start();   
+//                        	killApp();
+//                        	break;
+//                        case "KILL_APP":
+//                        	new Thread(this::killApp).start(); 
+//                        	killApp();
 //                        	sendRunningApps();
-                        	break;
+//                        	break;
                         case "SCREEN_SHOT":
                         	sendScreenShot();
                         	break;
@@ -421,13 +426,19 @@ public class ClientHandler implements Runnable{
     }
     
     private void closeAllConnections() {
+    	isRunning = false;
         try {
             if (disRemote != null) disRemote.close();
             if (dosRemote != null) dosRemote.close();
             if (socketRemote != null && !socketRemote.isClosed()) socketRemote.close();
+            
             if (disFile != null) disFile.close();
             if (dosFile != null) dosFile.close();
             if (socketFile != null && !socketFile.isClosed()) socketFile.close();
+            
+            if (disTM != null) disTM.close();
+            if (dosTM != null) dosTM.close();
+            if (socketTM != null && !socketTM.isClosed()) socketTM.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

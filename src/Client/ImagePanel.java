@@ -10,7 +10,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.embed.swing.SwingFXUtils;
 import java.awt.Dimension;
-import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
 import java.io.DataOutputStream;
 import java.io.IOException;

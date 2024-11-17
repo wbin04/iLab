@@ -5,60 +5,60 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
 
-<SplitPane dividerPositions="0.6635906040268457" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="240.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.ClientForm">
+<SplitPane id="container" dividerPositions="0.6635906040268457" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="300.0" prefWidth="600.0" stylesheets="@ClientForm.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.ClientForm">
   <items>
-    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
+      <GridPane alignment="CENTER" prefHeight="155.0" prefWidth="400.0" stylesheets="@ClientForm.css">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
          <children>
-            <GridPane alignment="CENTER" prefHeight="155.0" prefWidth="400.0">
-              <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-              </rowConstraints>
+            <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css">
                <children>
-                  <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0">
-                     <children>
-                        <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="70.0" text="Nhập IP:" textAlignment="CENTER" />
-                        <TextField fx:id="tfIP" prefHeight="25.0" prefWidth="100.0" text="192.168.1.5" />
-                     </children>
-                  </FlowPane>
-                  <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="1">
-                     <children>
-                        <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="70.0" text="Nhập cổng:" textAlignment="CENTER" />
-                        <TextField fx:id="tfPort" prefHeight="25.0" prefWidth="100.0" text="2222" />
-                     </children>
-                  </FlowPane>
-                  <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1">
-                     <children>
-                        <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="70.0" text="Nhập tên:" textAlignment="CENTER" />
-                        <TextField fx:id="tfName" prefHeight="25.0" prefWidth="100.0" text="aaa" />
-                     </children>
-                  </FlowPane>
-                  <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                     <children>
-                        <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="70.0" text="Chọn máy:" textAlignment="CENTER" />
-                        <ComboBox fx:id="cbbNum" prefHeight="25.0" prefWidth="100.0" />
-                     </children>
-                  </FlowPane>
-               </children>
-            </GridPane>
-         </children></AnchorPane>
-    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="44.0" prefWidth="398.0">
-         <children>
-            <FlowPane alignment="CENTER" prefHeight="78.0" prefWidth="400.0">
-               <children>
-                  <Button fx:id="btnConnect" mnemonicParsing="false" prefHeight="26.0" prefWidth="82.0" text="Kết nối" />
+                  <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Nhập IP:" textAlignment="CENTER" />
+                  <TextField fx:id="tfIP" prefHeight="25.0" prefWidth="130.0" stylesheets="@ClientForm.css" text="192.168.1.5" />
                </children>
             </FlowPane>
-         </children></AnchorPane>
+            <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.rowIndex="1">
+               <children>
+                  <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Nhập cổng:" textAlignment="CENTER" />
+                  <TextField fx:id="tfPort" prefHeight="25.0" prefWidth="130.0" stylesheets="@ClientForm.css" text="2222" />
+               </children>
+            </FlowPane>
+            <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.columnIndex="1">
+               <children>
+                  <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Nhập tên:" textAlignment="CENTER" />
+                  <TextField fx:id="tfName" disable="true" prefHeight="25.0" prefWidth="130.0" stylesheets="@ClientForm.css" text="aaa" />
+               </children>
+            </FlowPane>
+            <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.columnIndex="1" GridPane.rowIndex="1">
+               <children>
+                  <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Chọn máy:" textAlignment="CENTER" />
+                  <ComboBox fx:id="cbbNum" disable="true" prefHeight="25.0" prefWidth="130.0" stylesheets="@ClientForm.css" />
+               </children>
+            </FlowPane>
+         </children>
+      </GridPane>
+      <StackPane>
+         <children>
+            <Button fx:id="btnConnect" mnemonicParsing="false" prefHeight="26.0" stylesheets="@ClientForm.css" text="Kết nối" />
+            <FlowPane fx:id="flowPane" alignment="CENTER" hgap="150.0" prefHeight="200.0" prefWidth="200.0" StackPane.alignment="CENTER">
+               <children>
+                  <Button fx:id="btnDisconnect" alignment="CENTER" mnemonicParsing="false" stylesheets="@ClientForm.css" text="Huỷ kết nối" />
+                  <Button fx:id="btnJoin" alignment="CENTER" mnemonicParsing="false" stylesheets="@ClientForm.css" text="Vào phòng" />
+               </children>
+            </FlowPane>
+         </children>
+      </StackPane>
   </items>
 </SplitPane>

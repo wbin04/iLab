@@ -8,11 +8,15 @@ import java.net.Socket;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.NodeOrientation;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
@@ -32,7 +36,6 @@ public class ClientChatForm implements Runnable{
 	private Socket socket;
     private DataOutputStream dos;
     private DataInputStream dis;
-    private String name;
     private Stage clientFormStage;
     private boolean isRunning = true;
 	
@@ -42,7 +45,6 @@ public class ClientChatForm implements Runnable{
 			this.socket = socketChat;
 			this.dos = new DataOutputStream(socket.getOutputStream());
 			this.dis = new DataInputStream(socket.getInputStream());
-			this.name = name;
 			this.clientFormStage = clientFormStage;
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -64,6 +66,7 @@ public class ClientChatForm implements Runnable{
 //                    stage.hide(); 
                     event.consume(); 
                 });
+    	        stage.setResizable(false);
     	        stage.show();
 
     	        setEvents();
@@ -75,6 +78,9 @@ public class ClientChatForm implements Runnable{
     }
 	
 	private void setEvents() {
+		chatArea.heightProperty().addListener((observable, oldValue, newValue) -> {
+    	    scrollPane.setVvalue(1.0); 
+    	});
 		btnSend.setOnAction(event -> sendMessage());
 	    chatField.setOnAction(event -> sendMessage());
 	}
@@ -83,10 +89,10 @@ public class ClientChatForm implements Runnable{
     	String message = chatField.getText();
         if(!message.equals("")) {
         	try {
-                dos.writeUTF(name + ": " +message); 
+                dos.writeUTF(message); 
                 dos.flush();  
                 chatField.setText(""); 
-                appendText("You: " + message + "\n");
+                appendText(message, true, false);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -100,25 +106,25 @@ public class ClientChatForm implements Runnable{
                  System.out.println("Message in ClientChatForm: " + message);
                  if (message != null) {
                      if(message.equals("SERVER_CLOSED")) {
-                    	 appendText("Server đã đóng!\n");
+                    	 appendText("Server đã đóng!", false, false);
                          isRunning = false;
                      }
                      else if (message.startsWith("REMOTE:")) {
-                         appendText("Server đang xem màn hình của bạn!\n");
+                         appendText("Server đang xem màn hình của bạn!", false, false);
                      }
                      else if (message.startsWith("FILE:")) {
                          String fileName = message.substring(5);
-                         appendText("Server đã gửi file: " + fileName + " tại thư mục D:/Remote/File\n");
+                         appendText(fileName, false, true);
                      } 
                      else {
-                         appendText("Server: " + message + "\n");
+                         appendText(message, false, false);
                      }
                  }
              }
          } catch (Exception e) {
         	 if (isRunning) {  
                  e.printStackTrace();
-                 appendText("Lỗi khi nhận tin nhắn: " + e.getMessage() + "\n");
+                 appendText("Lỗi khi nhận tin nhắn: " + e.getMessage(), false, false);
              }
          } finally {
              try {
@@ -141,10 +147,54 @@ public class ClientChatForm implements Runnable{
 		receiveMessage();
 	}
 	
-	private void appendText(String msg) {
-    	Platform.runLater(() -> {
-    	    chatArea.getChildren().add(new Text(msg)); 
-    	    scrollPane.setVvalue(1.0);
-    	});
+	private void appendText(String msg, boolean isChat, boolean isFile) {
+        Platform.runLater(() -> {
+            TextFlow textFlow = new TextFlow();
+            textFlow.setMaxWidth(350);  
+
+            Label label = new Label();
+            label.setPadding(new Insets(10, 20, 10, 20));
+            label.setWrapText(true);  
+            label.setMaxWidth(300);  
+            label.setText(msg);
+
+            FlowPane flowPane = new FlowPane();
+            flowPane.setPrefWidth(350);
+            
+            if (isChat) {
+                label.setStyle("-fx-font-size: 18px; -fx-fill: black; -fx-background-color: #DCF8C6; -fx-background-radius: 10;");
+                textFlow.getChildren().add(label);
+                flowPane.getChildren().add(textFlow);
+                flowPane.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);  
+            } 
+            else if(isFile) {
+            	Text text1 = new Text("Đã nhận: ");
+                text1.setStyle("-fx-font-size: 18px; -fx-fill: black;"); 
+
+                Text fileText = new Text(msg);
+                fileText.setStyle("-fx-font-size: 18px; -fx-fill: red;"); 
+                
+                Text text2 = new Text(" tại thư mục ");
+                text2.setStyle("-fx-font-size: 18px; -fx-fill: black;"); 
+
+                Text folderText = new Text("D:/Remote/File");
+                folderText.setStyle("-fx-font-size: 18px; -fx-fill: red;");
+
+                textFlow.getChildren().addAll(text1, fileText, text2, folderText);
+                textFlow.setStyle("-fx-padding: 10px 20px 10px 20px; -fx-background-color: #FFFFFF; -fx-background-radius: 10;");
+                flowPane.getChildren().add(textFlow);
+                flowPane.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
+//                flowPane.setAlignment(Pos.CENTER);
+            }
+            else {
+                label.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 10;");
+                textFlow.getChildren().add(label);
+                flowPane.getChildren().add(textFlow);
+                flowPane.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);  
+            }
+            
+            chatArea.getChildren().add(flowPane);
+            scrollPane.setVvalue(1.0); 
+        });
     }
 }

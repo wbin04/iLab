@@ -9,7 +9,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.file.attribute.DosFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,11 +19,13 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.NodeOrientation;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.text.Text;
@@ -33,8 +34,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class ServerForm extends Application {
-    @FXML
-    private FlowPane clientContainer; 
     @FXML
     private TextField tfPort;
     @FXML
@@ -48,32 +47,42 @@ public class ServerForm extends Application {
     @FXML
     private Button btnClose;
     @FXML
-    private ScrollPane scrollPane;
+    private ScrollPane chatPane;
     @FXML
     private TextFlow chatArea;
+    @FXML
+    private FlowPane flowPane_chat;
     @FXML
     private TextField chatField;
     @FXML
     private Button btnSend;
     @FXML
     private Button btnFile;
+    @FXML
+    private ScrollPane panelPane;
+    @FXML
+    private FlowPane clientContainer; 
     
     private Map<Integer, ServerClientPanel> clientFormsMap;
     private Map<Integer, Boolean> clientConnected;
+    
     private List<Socket> listSocket = new ArrayList<>();
     private List<Socket> listSocketChat = new ArrayList<>();
     private List<Socket> listSocketRemote = new ArrayList<>();
     private List<Socket> listSocketFile = new ArrayList<>();
+    private List<Socket> listSocketTM = new ArrayList<>();
+    
     private ServerSocket serverSocket;
     private ServerSocket serverSocketChat;
     private ServerSocket serverSocketRemote;
     private ServerSocket serverSocketFile;
+    private ServerSocket serverSocketTM;
     private ServerForm controller;
     
     private boolean isRunning;
 
     public static void main(String[] args) {
-        launch(args);
+    	launch(args);
     }
 
     @Override
@@ -82,24 +91,29 @@ public class ServerForm extends Application {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("ServerForm.fxml"));
             Parent root = loader.load();
             primaryStage.setTitle("ServerForm");
-            primaryStage.setScene(new Scene(root, 1000, 600));
+            Scene scene = new Scene(root, 1200, 720);
+            scene.getStylesheets().clear();
+//            scene.getStylesheets().add(getClass().getResource("ServerForm.css").toExternalForm());
+            primaryStage.setMaximized(true);
+            primaryStage.setScene(scene);
             primaryStage.setOnCloseRequest(event -> {
                 closeServer(); 
                 System.exit(0); 
             });
+//            primaryStage.setResizable(false);
             primaryStage.show();
 
             controller = loader.getController();
-            controller.setEvents();
+            controller.setEvents(primaryStage);
             controller.setStatus(true);
         } catch (IOException e) {
         	e.printStackTrace();
         }
     }
 
-    private void setEvents() {
+    private void setEvents(Stage stage) {
     	chatArea.heightProperty().addListener((observable, oldValue, newValue) -> {
-    	    scrollPane.setVvalue(1.0); 
+    	    chatPane.setVvalue(1.0); 
     	});
 
     	btnSend.setOnAction(event -> sendMessage());
@@ -113,6 +127,9 @@ public class ServerForm extends Application {
             	loadPanel();
             	startServerInBackground();
             	setStatus(false);
+            	stage.setOnCloseRequest(event2 -> {
+            		event2.consume(); 
+            	});
     		} catch (Exception e) {
     			e.printStackTrace();
     		}   	
@@ -120,6 +137,9 @@ public class ServerForm extends Application {
         btnClose.setOnAction(event -> {
         	closeServer();
         	setStatus(true);
+        	stage.setOnCloseRequest(event2 -> {
+        		System.exit(0);
+        	});
         });
     }
     
@@ -131,11 +151,13 @@ public class ServerForm extends Application {
                 serverSocketChat = new ServerSocket(port+1);
                 serverSocketRemote = new ServerSocket(port+2);
                 serverSocketFile = new ServerSocket(port+3);
+                serverSocketTM = new ServerSocket(port+4);
 
                 Platform.runLater(() -> {
 					try {
-						chatArea.getChildren().add(new Text("Server tại địa chỉ " + InetAddress.getLocalHost().getHostAddress() + " cổng " + port + " đang chờ kết nối...\n"));
-						scrollPane.setVvalue(1.0);
+//						chatArea.getChildren().add(new Text("Server tại địa chỉ " + InetAddress.getLocalHost().getHostAddress() + " cổng " + port + " đang chờ kết nối...\n"));
+						appendText("Server tại địa chỉ " + InetAddress.getLocalHost().getHostAddress() + " cổng " + port + " đang chờ kết nối...\n", false, false);
+						chatPane.setVvalue(1.0);
 					} catch (UnknownHostException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -144,27 +166,56 @@ public class ServerForm extends Application {
                 while (isRunning) {
                 	try {
                         Socket soc = serverSocket.accept();
+                        DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
+                        DataInputStream dis = new DataInputStream(soc.getInputStream());
+
+                        String clientSignal = dis.readUTF();
+                        if (clientSignal.equals("CONNECT_TO_SERVER")) {
+                            String listMachines = "";
+                            for (int n : clientConnected.keySet()) {
+                                if (!clientConnected.get(n)) {
+                                    listMachines += "" + n + ",";
+                                }
+                            }
+                            System.out.println("Sending listMachines: " + listMachines);
+                            dos.writeUTF(listMachines);
+                        }
+                        
+                        String msg = dis.readUTF();
+//            			System.out.println("Server: " + msg);
+            			if(msg.equals("DISCONNECTED")) {
+            				dis.close();
+            		        dos.close();
+            		        soc.close();
+            		        continue;
+            			}
+                        
                         Socket socChat = serverSocketChat.accept();
                         Socket socRemote = serverSocketRemote.accept();
                         Socket socFile = serverSocketFile.accept();
+                        Socket socTM = serverSocketTM.accept();
 
                         listSocket.add(soc);
                         listSocketChat.add(socChat);
                         listSocketRemote.add(socRemote);
                         listSocketFile.add(socFile);
+                        listSocketTM.add(socTM);
 
-                        // Cập nhật UI phải thực hiện trong luồng JavaFX
                         final Socket finalSoc = soc;
                         final Socket finalSocChat = socChat;
                         final Socket finalSocRemote = socRemote;
                         final Socket finalSocFile = socFile;
+                        final Socket finalSocTM = socTM;
                         javafx.application.Platform.runLater(() -> {
-                            refreshServerForm(finalSoc, finalSocChat, finalSocRemote, finalSocFile);
+                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocRemote, finalSocFile, finalSocTM);
                         });
+                        
+                        dis.close();
+                        dos.close();
                     } catch (SocketException e) {
                         if (!isRunning) {
                             System.out.println("Server không còn chấp nhận kết nối.");
-                            appendText("Server không còn chấp nhận kết nối.\n");
+                            appendText("Server không còn chấp nhận kết nối.\n", false, false);
                         } else {
                             e.printStackTrace();
                         }
@@ -184,7 +235,9 @@ public class ServerForm extends Application {
         clientFormsMap = new HashMap<>();
         clientConnected = new HashMap<>();
         
-        for (int i = 1; i <= 10; i++) {
+        int count = Integer.parseInt(tfNum.getText());
+        
+        for (int i = 1; i <= count; i++) {
         	
         	ServerClientPanel clientPanel = new ServerClientPanel();
         	clientContainer.getChildren().add(clientPanel.getPanel(i));
@@ -193,81 +246,92 @@ public class ServerForm extends Application {
         	clientConnected.put(i, false);
         }
         
-//        for (int n : clientFormsMap.keySet()) {
-//        	 System.out.println(n + " " + clientConnected.get(n));
-//        }
-        
         tfConnected.setText("0");
-		tfEmpty.setText("10");
+		tfEmpty.setText("" + count);
     }
     
-    private void refreshServerForm(Socket soc, Socket socketChat, Socket socketRemote, Socket socketFile) {
-    	DataInputStream dis;
-		try {
-			dis = new DataInputStream(soc.getInputStream());
-			String msg = dis.readUTF();
-//			System.out.println("Server: " + msg);
-			String[] parts = msg.split(",");
-	        int stt = Integer.parseInt(parts[0]);
-	        String name = parts[1];
+    private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM) {
+    	String[] parts = msg.split(",");
+        int stt = Integer.parseInt(parts[0]);
+        String name = parts[1];
 
-        	DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
-	        if(!clientConnected.get(stt)) {
-	        	dos.writeUTF("FALSE");
-	        }
-	        else {
-	        	dos.writeUTF("TRUE");
-	        	
-	        	dis.close();
-	        	dos.close();
-	        	soc.close();
-	        	socketChat.close();
-	        	socketRemote.close();
-	        	socketFile.close();
-	        	
-	        	return;
-	        }
-
-			ServerClientPanel clientPanel = clientFormsMap.get(stt); // tìm ra được clientPanel, cấp cho nó 1 socket, ban đầu khởi tạo bằng NULL
-			clientPanel.setIP("IP: "+soc.getInetAddress().getLocalHost().getHostAddress());
-			clientPanel.setName("Họ tên: " + name);
-			clientPanel.setStatus(true);
-			clientPanel.setSocket(soc);
-			clientPanel.setSocketChat(socketChat);
-			clientPanel.setSocketRemote(socketRemote, socketFile);
-			clientPanel.setEvents();
-			
-			tfConnected.setText("" + listSocket.size());
-			tfEmpty.setText("" + (10-listSocket.size()));
-			appendText(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
-			System.out.println(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
-	        
-	        clientConnected.put(stt, true);
-//	        for (int n : clientFormsMap.keySet()) {
-//	        	 System.out.println(n + " " + clientConnected.get(n));
-//	        }
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		ServerClientPanel clientPanel = clientFormsMap.get(stt); // tìm ra được clientPanel, cấp cho nó 1 socket, ban đầu khởi tạo bằng NULL
+		clientPanel.setStartTime(System.currentTimeMillis());
+		
+		clientPanel.setName(name);
+		clientPanel.setStatus(true);
+		clientPanel.setSocketChat(socketChat);
+		clientPanel.setSocketRemote(socketRemote, socketFile, socketTM);
+		clientPanel.setEvents();
+		
+		tfConnected.setText("" + listSocket.size());
+		tfEmpty.setText("" + (10-listSocket.size()));
+		appendText(name + " ở máy số " + stt + " mới vừa kết nối vào server", false, false);
+		System.out.println(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
+        
+        clientConnected.put(stt, true);
     }
     
     private void setStatus(boolean status) {
     	tfPort.setEditable(status);
     	tfNum.setEditable(status);
+    	tfConnected.setDisable(status);
+    	tfEmpty.setDisable(status);
     	btnOpen.setDisable(!status);
     	btnClose.setDisable(status);
+    	
+    	chatPane.setDisable(status);
+    	panelPane.setDisable(status);
     	btnFile.setDisable(status);
     	btnSend.setDisable(status);
-    	chatField.setEditable(!status);
+    	chatField.setDisable(status);
+    	
+    	panelPane.setDisable(status);
     }
     
-    private void appendText(String msg) {
-    	Platform.runLater(() -> {
-    	    chatArea.getChildren().add(new Text(msg)); 
-    	    scrollPane.setVvalue(1.0);
-    	});
+    private void appendText(String msg, boolean isChat, boolean isFile) {
+        Platform.runLater(() -> {
+            TextFlow textFlow = new TextFlow();
+            textFlow.setMaxWidth(600);  
 
+            Label label = new Label();
+            label.setPadding(new Insets(10, 20, 10, 20));
+            label.setWrapText(true);  
+            label.setMaxWidth(550);  
+            label.setText(msg);
+
+            FlowPane flowPane = new FlowPane();
+            flowPane.setPrefWidth(600);
+            
+            if (isChat) {
+                label.setStyle("-fx-font-size: 18px; -fx-fill: black; -fx-background-color: #DCF8C6; -fx-background-radius: 10;");
+                textFlow.getChildren().add(label);
+                flowPane.getChildren().add(textFlow);
+                flowPane.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);  
+            } 
+            else if(isFile) {
+            	Text prefixText = new Text("Bạn đã gửi file: ");
+                prefixText.setStyle("-fx-font-size: 18px; -fx-fill: black;"); 
+
+                Text fileText = new Text(msg);
+                fileText.setStyle("-fx-font-size: 18px; -fx-fill: red;"); 
+
+                textFlow.getChildren().addAll(prefixText, fileText);
+                textFlow.setStyle("-fx-padding: 10px 20px 10px 20px; -fx-background-color: #DCF8C6; -fx-background-radius: 10;");
+                flowPane.getChildren().add(textFlow);
+                flowPane.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
+//                flowPane.setAlignment(Pos.CENTER);
+            }
+            else {
+                label.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 10;");
+                textFlow.getChildren().add(label);
+                flowPane.getChildren().add(textFlow);
+                flowPane.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);  
+            }
+            
+            chatArea.getChildren().add(flowPane);
+            chatPane.setVvalue(1.0);  
+        });
     }
     
     private void sendMessage() {
@@ -286,7 +350,7 @@ public class ServerForm extends Application {
             }
 
             chatField.setText("");
-            appendText("Bạn: " + msg + "\n");
+            appendText(msg, true, false);
         }
     }
     
@@ -299,7 +363,7 @@ public class ServerForm extends Application {
                 new Thread(new ClientFileSender(listSocketChat.get(i), listSocketFile.get(i), file)).start();
             }
     	}
-    	if (file != null) appendText("Bạn đã gửi file: " + file.getName() + "\n");
+    	if (file != null) appendText(file.getName(), false, true);
     }
     
     private void closeServer() {
@@ -318,6 +382,9 @@ public class ServerForm extends Application {
             if (serverSocketFile != null && !serverSocketFile.isClosed()) {
             	serverSocketFile.close();
             }
+            if (serverSocketTM != null && !serverSocketTM.isClosed()) {
+            	serverSocketTM.close();
+            }
 
             for (Socket socket : listSocket) {
                 if (socket != null && !socket.isClosed()) {
@@ -333,7 +400,7 @@ public class ServerForm extends Application {
                     } catch (IOException e1) {
                         e1.printStackTrace();
                         System.out.println("Lỗi đóng socketChat ServerForm");
-                        appendText("Lỗi đóng socketChat ServerForm\n");
+                        appendText("Lỗi đóng socketChat ServerForm\n", false, false);
                     }
                 }
             }
@@ -346,7 +413,7 @@ public class ServerForm extends Application {
                     } catch (IOException e1) {
                         e1.printStackTrace();
                         System.out.println("Lỗi đóng socketRemote ServerForm");
-                        appendText("Lỗi đóng socketRemote ServerForm\n");
+                        appendText("Lỗi đóng socketRemote ServerForm\n", false, false);
                     }
                 }
             }
@@ -359,13 +426,26 @@ public class ServerForm extends Application {
                     } catch (IOException e1) {
                         e1.printStackTrace();
                         System.out.println("Lỗi đóng socketRemote ServerForm");
-                        appendText("Lỗi đóng socketFile ServerForm\n");
+                        appendText("Lỗi đóng socketFile ServerForm\n", false, false);
+                    }
+                }
+            }
+            for (Socket socketTM : listSocketTM) {
+                if (socketTM != null && !socketTM.isClosed()) {
+                	try {
+                        DataOutputStream dos = new DataOutputStream(socketTM.getOutputStream());
+                        dos.writeUTF("SERVER_CLOSED");
+                        dos.flush();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        System.out.println("Lỗi đóng socketRemote ServerForm");
+                        appendText("Lỗi đóng socketFile ServerForm\n", false, false);
                     }
                 }
             }
 
             javafx.application.Platform.runLater(() -> {
-            	appendText("Server đã được đóng.\n");
+            	appendText("Server đã được đóng.\n", false, false);
                 listSocket.clear();
                 listSocketChat.clear();
                 listSocketRemote.clear();
@@ -375,7 +455,7 @@ public class ServerForm extends Application {
             });
         } catch (IOException e) {
             e.printStackTrace();
-            appendText("Lỗi khi đóng server: " + e.getMessage() + "\n");
+            appendText("Lỗi khi đóng server: " + e.getMessage() + "\n", false, false);
         }
     }
     	

@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.TextFlow?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<GridPane id="gridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="400.0" stylesheets="@ServerChatForm.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
   <columnConstraints>
     <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
   </columnConstraints>
@@ -19,19 +19,19 @@
     <RowConstraints maxHeight="244.7999938964844" minHeight="10.0" prefHeight="50.99997558593748" vgrow="SOMETIMES" />
   </rowConstraints>
    <children>
-      <ScrollPane fx:id="scrollPane">
+      <ScrollPane id="scrollPane" fx:id="scrollPane" fitToWidth="true" stylesheets="@ServerChatForm.css">
          <content>
-            <TextFlow fx:id="chatArea">
+            <TextFlow id="textFlow" fx:id="chatArea" stylesheets="@ServerChatForm.css">
                <padding>
                   <Insets bottom="20.0" left="20.0" right="10.0" top="20.0" />
                </padding>
             </TextFlow>
          </content>
       </ScrollPane>
-      <FlowPane alignment="CENTER" hgap="25.0" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="1">
+      <FlowPane id="flowPane" alignment="CENTER" hgap="25.0" prefHeight="200.0" prefWidth="200.0" stylesheets="@ServerChatForm.css" GridPane.rowIndex="1">
          <children>
-            <TextField fx:id="chatField" prefHeight="25.0" prefWidth="260.0" />
-            <Button fx:id="btnSend" mnemonicParsing="false" prefHeight="25.0" prefWidth="65.0" text="Gửi" />
+            <TextField id="chatField" fx:id="chatField" prefHeight="25.0" prefWidth="260.0" stylesheets="@ServerChatForm.css" />
+            <Button id="btnSend" fx:id="btnSend" mnemonicParsing="false" prefHeight="25.0" prefWidth="65.0" stylesheets="@ServerChatForm.css" text="Gửi" />
          </children>
       </FlowPane>
    </children>

@@ -9,11 +9,15 @@ import java.net.Socket;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.NodeOrientation;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
@@ -35,14 +39,17 @@ public class ServerChatForm implements Runnable{
 	private DataOutputStream dos;
 	private boolean isRunning = true;
 	
-	public void set(Socket socketChat, String stt) {
+	private String name;
+	
+	public void set(Socket socketChat, String stt, String name) {
 	    try {
+	    	this.name = name;
 	        FXMLLoader loader = new FXMLLoader(getClass().getResource("ServerChatForm.fxml"));
 	        loader.setController(this); 
 	        Parent root = loader.load();
 
 	        stage = new Stage();
-	        stage.setTitle("ServerChatForm");
+	        stage.setTitle("Tin nhắn của Máy số " + stt + ": " + name);
 	        stage.setScene(new Scene(root, 400, 500));
 	        stage.setOnCloseRequest(event -> {
                 stage.hide(); 
@@ -62,6 +69,7 @@ public class ServerChatForm implements Runnable{
 	
 	public void showServerChatForm() {
 	    if (stage != null) {
+	    	stage.setResizable(false);
 	        stage.show();
 	    } else {
 	        System.out.println("Stage is null, cannot show chat form.");
@@ -70,6 +78,9 @@ public class ServerChatForm implements Runnable{
 
 	
 	private void setEvents() {
+		chatArea.heightProperty().addListener((observable, oldValue, newValue) -> {
+    	    scrollPane.setVvalue(1.0); 
+    	});
 		btnSend.setOnAction(event -> sendMessage());
 	    chatField.setOnAction(event -> sendMessage());
 	}
@@ -82,7 +93,7 @@ public class ServerChatForm implements Runnable{
                 dos.flush();  
                 System.out.println("Send successfully");
                 chatField.setText(""); 
-                appendText("Bạn: " + message + "\n");
+                appendText(message, true);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -97,21 +108,21 @@ public class ServerChatForm implements Runnable{
 	                System.out.println("Message in ClientChatForm: " + message);
 	                if (message != null) {
 	                    if (message.equals("SERVER_CLOSED")) {
-	                        appendText("Server đã đóng!\n");
+	                        appendText("Server đã đóng!", false);
 	                        isRunning = false;
 	                    } else {
-	                        appendText("Server: " + message + "\n");
+	                        appendText(message, false);
 	                    }
 	                }
 	            }
 	        }
 	    } catch (EOFException eofEx) {
-	        appendText("Kết nối đã bị đóng.\n");
+	        appendText("Kết nối đã bị đóng.", false);
 	        isRunning = false;
 	    } catch (IOException e) {
 	        if (isRunning) {
 	            e.printStackTrace();
-	            appendText("Lỗi khi nhận tin nhắn: " + e.getMessage() + "\n");
+	            appendText("Lỗi khi nhận tin nhắn: " + e.getMessage(), false);
 	        }
 	    } finally {
 	        try {
@@ -130,10 +141,42 @@ public class ServerChatForm implements Runnable{
 		receiveMessage();
 	}
 	
-	private void appendText(String msg) {
-    	Platform.runLater(() -> {
-    	    chatArea.getChildren().add(new Text(msg)); 
-    	    scrollPane.setVvalue(1.0);
-    	});
+	private void appendText(String msg, boolean isChat) {
+        Platform.runLater(() -> {
+            TextFlow textFlow = new TextFlow();
+            textFlow.setMaxWidth(350);  
+
+            Label label = new Label();
+            label.setPadding(new Insets(10, 20, 10, 20));
+            label.setWrapText(true);  
+            label.setMaxWidth(300);  
+            label.setText(msg);
+
+            FlowPane flowPane = new FlowPane();
+            flowPane.setPrefWidth(350);
+            
+            if (isChat) {
+                label.setStyle("-fx-font-size: 18px; -fx-fill: black; -fx-background-color: #DCF8C6; -fx-background-radius: 10;");
+                textFlow.getChildren().add(label);
+                flowPane.getChildren().add(textFlow);
+                flowPane.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);  
+            } 
+            else {
+            	Text prefixText = new Text(name + ": ");
+                prefixText.setStyle("-fx-font-size: 18px; -fx-fill: red;"); 
+
+                Text fileText = new Text(msg);
+                fileText.setStyle("-fx-font-size: 18px; -fx-fill: black;"); 
+
+                textFlow.getChildren().addAll(prefixText, fileText);
+                textFlow.setStyle("-fx-padding: 10px 20px 10px 20px; -fx-background-color: #FFFFFF; -fx-background-radius: 10;");
+                flowPane.getChildren().add(textFlow);
+                flowPane.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
+//                flowPane.setAlignment(Pos.CENTER);
+            }
+            
+            chatArea.getChildren().add(flowPane);
+            scrollPane.setVvalue(1.0); 
+        });
     }
 }

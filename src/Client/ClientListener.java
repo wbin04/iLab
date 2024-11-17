@@ -1,20 +1,20 @@
 package Client;
 
-import javafx.application.Application;
-import javafx.fxml.FXML;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+
 import javax.imageio.ImageIO;
 
 public class ClientListener {
@@ -30,12 +30,18 @@ public class ClientListener {
     private DataOutputStream dosFile;
     private DataInputStream disFile;
     
+    private Socket socketTM;
+    private DataOutputStream dosTM;
+    private DataInputStream disTM;
+    
     private String stt;
 	private Dimension serverScreenSize;
     private ImagePanel imagePanel;
     private Stage stage;
+    
+    private ClientTaskManager taskManager;
 
-	public ClientListener(Socket socketChat, Socket socketRemote, Socket socketFile, String stt) {
+	public ClientListener(Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, String stt) {
 		try {
 			this.socketChat = socketChat;
 						
@@ -46,6 +52,10 @@ public class ClientListener {
 			this.socketFile = socketFile;
 			disFile = new DataInputStream(socketFile.getInputStream());
 			dosFile = new DataOutputStream(socketFile.getOutputStream());
+			
+			this.socketTM = socketTM;
+			disTM = new DataInputStream(socketTM.getInputStream());
+			dosTM = new DataOutputStream(socketTM.getOutputStream());
 			
 			this.stt = stt;
 			
@@ -62,33 +72,54 @@ public class ClientListener {
 	
 	private void initializeUI(String stt) {
 		stage = new Stage();
-        stage.setTitle("Màn hình của: " + stt);
+        stage.setTitle("Màn hình của: Máy số " + stt);
         
         MenuBar menuBar = new MenuBar();
+        menuBar.setStyle("-fx-font-size: 16px");
         
         Menu fileMenu = new Menu("File");
-        MenuItem transferFileMenu = new MenuItem("Truyền file");
-        fileMenu.getItems().add(transferFileMenu);
+        MenuItem transferFileMenu = new MenuItem("File transfer");
+        MenuItem screenshotMenu = new MenuItem("Screenshot");
+        fileMenu.getItems().addAll(transferFileMenu, screenshotMenu);
 
         Menu toolsMenu = new Menu("Tools");
         MenuItem taskManagerMenu = new MenuItem("Task Manager");
-        MenuItem screenshotMenu = new MenuItem("Screenshot");
+        MenuItem blockDomainMenu = new MenuItem("Block Domain");
         MenuItem shutDownMenu = new MenuItem("Shut down");
-        toolsMenu.getItems().addAll(taskManagerMenu, screenshotMenu, shutDownMenu);
+        toolsMenu.getItems().addAll(taskManagerMenu, blockDomainMenu, shutDownMenu);
 
         menuBar.getMenus().addAll(fileMenu, toolsMenu);
 
         imagePanel = new ImagePanel(socketRemote, serverScreenSize);
-        imagePanel.setWidth(800);
-        imagePanel.setHeight(600);
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int screenWidth = (int) screenSize.getWidth();
+        int screenHeight = (int) screenSize.getHeight();
+
+        double aspectRatio = (double) screenWidth / screenHeight;
+        
+        double desiredAspectRatio = 16.0 / 9.0;
+        
+        int panelWidth, panelHeight;
+
+        if (aspectRatio > desiredAspectRatio) {
+            panelHeight = screenHeight;
+            panelWidth = (int) (panelHeight * desiredAspectRatio);
+        } else {
+            panelWidth = screenWidth;
+            panelHeight = (int) (panelWidth / desiredAspectRatio);
+        }
+        
+        imagePanel.setWidth(1344);
+        imagePanel.setHeight(756);
 
         
         BorderPane root = new BorderPane();
         root.setTop(menuBar);
         root.setCenter(imagePanel);
 
-        Scene scene = new Scene(root, 1000, 800);
+        Scene scene = new Scene(root, 1344, 756);
         stage.setScene(scene);
+        stage.setMaximized(true);
         stage.setOnCloseRequest(event -> {
             stage.hide(); 
             event.consume(); 
@@ -96,8 +127,11 @@ public class ClientListener {
         stage.hide();
 
         transferFileMenu.setOnAction(event -> transferFile());
-        taskManagerMenu.setOnAction(event -> taskManager());
         screenshotMenu.setOnAction(event -> sendCommand("SCREEN_SHOT"));
+        
+//        taskManagerMenu.setOnAction(event -> sendCommand("REQUEST_RUNNING_APPS"));
+        taskManagerMenu.setOnAction(event -> taskManager.show());
+        blockDomainMenu.setOnAction(event -> showDomainInputDialog());
         shutDownMenu.setOnAction(event -> sendCommand("SHUT_DOWN"));
     }
 	
@@ -127,10 +161,6 @@ public class ClientListener {
         if (file != null) {
             new Thread(new ClientFileSender(socketChat, socketFile, file)).start();
         }
-    }
-	
-	private void taskManager() {
-        sendCommand("REQUEST_RUNNING_APPS");
     }
 	
 	private void sendCommand(String command) {
@@ -175,6 +205,44 @@ public class ClientListener {
 		}
 	}
 	
+	public void showDomainInputDialog() {
+		TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Nhập tên miền");
+        dialog.setHeaderText("Vui lòng nhập tên miền");
+        dialog.setContentText("Tên miền:");
+
+        Optional<String> result = dialog.showAndWait();
+
+        if (result.isPresent()) { 
+            String domain = result.get().trim(); 
+            if (!domain.isEmpty()) { 
+                System.out.println("Tên miền đã nhập: " + domain);
+                NetworkMonitor networkMonitor = new NetworkMonitor();
+                String[] ips = networkMonitor.getIP(domain);
+                networkMonitor.blockDomain(ips);
+                showDialog("Đã chặn tên miền: " + domain, true);
+            } else {
+                showDialog("Tên miền không được để trống!", false);
+            }
+        } else {
+            System.out.println("Đã huỷ blockDomain");
+        }
+	}
+	
+	private void showDialog(String message, boolean type) {
+        Alert alert;
+        if(type) {
+        	alert = new Alert(Alert.AlertType.INFORMATION);
+        }
+        else {
+        	 alert = new Alert(Alert.AlertType.ERROR);
+        }
+        alert.setTitle("Lỗi");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+	
 	public void startListening() {
 		new Thread(()->{
 			try {
@@ -200,7 +268,9 @@ public class ClientListener {
 							Thread.sleep(50);
 							break;
 						case "TASK_MANAGER":
-							new ClientTaskManager(socketRemote);
+							Platform.runLater(() -> {
+						        taskManager = new ClientTaskManager(socketTM);
+						    });
 							break;
 						case "SCREENSHOT":
 							takeScreenShot();
@@ -220,12 +290,19 @@ public class ClientListener {
 	
 	private void closeConnections() {
 	    try {
+	    	if (socketChat != null && !socketChat.isClosed()) socketChat.close();
+	    	
 	        if (disRemote != null) disRemote.close();
 	        if (dosRemote != null) dosRemote.close();
 	        if (socketRemote != null && !socketRemote.isClosed()) socketRemote.close();
+	        
 	        if (disFile != null) disFile.close();
 	        if (dosFile != null) dosFile.close();
 	        if (socketFile != null && !socketFile.isClosed()) socketFile.close();
+	        
+	        if (disTM != null) disTM.close();
+	        if (dosTM != null) dosTM.close();
+	        if (socketTM != null && !socketTM.isClosed()) socketTM.close();
 	        System.out.println("Tất cả kết nối đã được đóng.");
 	    } catch (IOException e) {
 	        e.printStackTrace();
