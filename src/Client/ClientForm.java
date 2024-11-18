@@ -38,6 +38,8 @@ public class ClientForm extends Application {
 	private DataInputStream dis;
 	private DataOutputStream dos;
 	
+	private boolean isRunning;
+	
 	@Override
 	public void start(Stage primaryStage) {
 		 try {
@@ -99,6 +101,7 @@ public class ClientForm extends Application {
 	        	flowPane.setVisible(false);
 	        	tfName.setDisable(true);
 	        	cbbNum.setDisable(true);
+	        	isRunning = false;
 			}
         });
         
@@ -117,9 +120,28 @@ public class ClientForm extends Application {
 	            dos.flush();
 	            
 	            new ClientListenerMain(ip, port, name, stt, stage);
+//	            stage.hide();
 				
-				dos.close();
-				dis.close();
+	            isRunning = true;
+//				dos.close();
+//				dis.close();
+	            
+	            new Thread(() -> {
+	            	while(isRunning) {
+		            	try {
+							dos.writeUTF("RUNNING");
+			            	dos.flush();
+			            	
+			            	Thread.sleep(1000);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+		            }
+	            }).start();
 			} catch (Exception e2) {
 				// TODO: handle exception
 				System.out.println("Loi btnJoin ClientLoginForm");
@@ -127,6 +149,7 @@ public class ClientForm extends Application {
 	        	flowPane.setVisible(false);
 	        	tfName.setDisable(true);
 	        	cbbNum.setDisable(true);
+	        	isRunning = false;
 			}
         });
         
@@ -139,6 +162,7 @@ public class ClientForm extends Application {
 	        	flowPane.setVisible(false);
 	        	tfName.setDisable(true);
 	        	cbbNum.setDisable(true);
+	        	isRunning = false;
 			} catch (Exception e) {
 				// TODO: handle exception
 				System.out.println("Loi btnJoin ClientLoginForm");
@@ -146,6 +170,7 @@ public class ClientForm extends Application {
 	        	flowPane.setVisible(false);
 	        	tfName.setDisable(true);
 	        	cbbNum.setDisable(true);
+	        	isRunning = false;
 			}
         });
     }

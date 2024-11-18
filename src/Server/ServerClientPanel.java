@@ -62,7 +62,12 @@ public class ServerClientPanel {
 	
 	public void setStartTime(long startTime) {
 	    this.startTime = startTime;
-	    startUsageTimer();
+	    if(this.startTime == -1) {
+	    	controller.lbTime.setText("Thời gian sử dụng");
+	    }
+	    else {
+	    	startUsageTimer();
+	    }
 	}
 
 	private void startUsageTimer() {
@@ -87,7 +92,12 @@ public class ServerClientPanel {
 	
 	public void setName(String name) {
 		this.name = name;
-		controller.lbName.setText("Họ tên: " + name);
+		if(name.trim().equals("")) {
+			controller.lbName.setText("Họ tên");
+		}
+		else {
+			controller.lbName.setText("Họ tên: " + name);
+		}
 	}
 	
 	public void setStatus(boolean status) {

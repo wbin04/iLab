@@ -200,6 +200,7 @@ public class ServerForm extends Application {
                         listSocketRemote.add(socRemote);
                         listSocketFile.add(socFile);
                         listSocketTM.add(socTM);
+            			
 
                         final Socket finalSoc = soc;
                         final Socket finalSocChat = socChat;
@@ -210,8 +211,8 @@ public class ServerForm extends Application {
                             refreshServerForm(finalSoc, msg, finalSocChat, finalSocRemote, finalSocFile, finalSocTM);
                         });
                         
-                        dis.close();
-                        dos.close();
+//                        dis.close();
+//                        dos.close();
                     } catch (SocketException e) {
                         if (!isRunning) {
                             System.out.println("Server không còn chấp nhận kết nối.");
@@ -270,6 +271,56 @@ public class ServerForm extends Application {
 		System.out.println(name + " ở máy số " + stt + " mới vừa kết nối vào server\n");
         
         clientConnected.put(stt, true);
+        
+
+		removeClientPanel(soc, socketChat, socketRemote, socketFile, socketTM, stt, name);
+    }
+    
+    private void removeClientPanel(Socket soc, Socket socChat, Socket socRemote, Socket socFile, Socket socTM, int stt, String name) {
+    	new Thread(() -> {
+            try {
+            	DataInputStream dis = new DataInputStream(soc.getInputStream());
+            	while (isRunning) {
+                    if (dis.available() > 0) {
+//                    	System.out.println("true");
+                    }
+                    else {
+//                    	System.out.println("false");
+
+                		
+                		appendText(name + " ở máy số " + stt + " đã ngắt kết nối", false, false);
+                    	
+                    	listSocket.remove(soc);
+                    	listSocketChat.remove(socChat);
+                    	listSocketRemote.remove(socRemote);
+                    	listSocketFile.remove(socFile);
+                    	listSocketTM.remove(socTM);
+                    	
+                    	soc.close();
+                    	socChat.close();
+                    	socRemote.close();
+                    	socFile.close();
+                    	socTM.close();
+                    	
+                    	clientConnected.put(stt, false);
+                    	ServerClientPanel clientPanel = clientFormsMap.get(stt); // tìm ra được clientPanel, cấp cho nó 1 socket, ban đầu khởi tạo bằng NULL
+                		clientPanel.setStartTime(-1);
+                		
+                		clientPanel.setName("");
+                		clientPanel.setStatus(false);
+                		clientPanel.setSocketChat(null);
+                		clientPanel.setSocketRemote(null, null, null);
+                		clientPanel.setEvents();
+                		
+                    	break;
+                    }
+                    Thread.sleep(1000); 
+                } 
+            } catch (Exception e) {
+//              e.printStackTrace();
+          	System.out.println("Client ngat ket noi");
+            }
+    	}).start();
     }
     
     private void setStatus(boolean status) {

@@ -113,6 +113,7 @@ public class ClientTaskManager extends Stage {
             try {
                 while(isRunning) {
                 	int appCount = disTM.readInt();
+                	
                     List<AppInfo> apps = new ArrayList<>();
                     for (int i = 0; i < appCount; i++) {
                         String appName = disTM.readUTF();
