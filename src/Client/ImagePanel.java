@@ -17,36 +17,38 @@ import java.net.Socket;
 
 public class ImagePanel extends Canvas {
     private BufferedImage img;
-    private DataOutputStream dosRemote;
+    private DataOutputStream dos;
     private Dimension serverScreenSize;
 
-    public ImagePanel(Socket socket, Dimension serverScreenSize) {
+    public ImagePanel(Socket socket, Dimension serverScreenSize, boolean isRemote) {
         this.serverScreenSize = serverScreenSize;
         try {
-            this.dosRemote = new DataOutputStream(socket.getOutputStream());
+            this.dos = new DataOutputStream(socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        this.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> sendMouseEvent(e, "MOUSE_PRESS"));
-        this.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> sendMouseEvent(e, "MOUSE_RELEASE"));
-        this.addEventHandler(MouseEvent.MOUSE_MOVED, e -> sendMouseEvent(e, "MOUSE_MOVE"));
-        this.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> sendMouseEvent(e, "MOUSE_DRAGGED"));
+        if(isRemote) {
+        	this.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> sendMouseEvent(e, "MOUSE_PRESS"));
+            this.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> sendMouseEvent(e, "MOUSE_RELEASE"));
+            this.addEventHandler(MouseEvent.MOUSE_MOVED, e -> sendMouseEvent(e, "MOUSE_MOVE"));
+            this.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> sendMouseEvent(e, "MOUSE_DRAGGED"));
 
-        this.addEventHandler(ScrollEvent.SCROLL, e -> {
-            try {
-                dosRemote.writeUTF("MOUSE_WHEEL");
-                dosRemote.writeInt((int) e.getDeltaY());
-                dosRemote.flush();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        });
+            this.addEventHandler(ScrollEvent.SCROLL, e -> {
+                try {
+                    dos.writeUTF("MOUSE_WHEEL");
+                    dos.writeInt((int) e.getDeltaY());
+                    dos.flush();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            });
 
-        this.setFocusTraversable(true);
-        this.addEventHandler(KeyEvent.KEY_PRESSED, e -> sendKeyEvent(e, "KEY_PRESS"));
-        this.addEventHandler(KeyEvent.KEY_RELEASED, e -> sendKeyEvent(e, "KEY_RELEASE"));
-        this.addEventHandler(KeyEvent.KEY_TYPED, e -> sendKeyEvent(e, "KEY_TYPED"));
+            this.setFocusTraversable(true);
+            this.addEventHandler(KeyEvent.KEY_PRESSED, e -> sendKeyEvent(e, "KEY_PRESS"));
+            this.addEventHandler(KeyEvent.KEY_RELEASED, e -> sendKeyEvent(e, "KEY_RELEASE"));
+            this.addEventHandler(KeyEvent.KEY_TYPED, e -> sendKeyEvent(e, "KEY_TYPED"));
+        }
     }
 
     private void drawImage() {
@@ -71,27 +73,27 @@ public class ImagePanel extends Canvas {
             switch (eventType) {
 	            case "MOUSE_PRESS":
 	            case "MOUSE_RELEASE":
-	            	dosRemote.writeUTF(eventType);
-	                dosRemote.writeInt((int) (e.getX() * scaleX));
-	                dosRemote.writeInt((int) (e.getY() * scaleY));
-	                dosRemote.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
-	                dosRemote.flush();
+	            	dos.writeUTF(eventType);
+	                dos.writeInt((int) (e.getX() * scaleX));
+	                dos.writeInt((int) (e.getY() * scaleY));
+	                dos.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
+	                dos.flush();
 	                break;
 	
 	            case "MOUSE_MOVE":
-	            	dosRemote.writeUTF(eventType);
-	                dosRemote.writeInt((int) (e.getX() * scaleX));
-	                dosRemote.writeInt((int) (e.getY() * scaleY));
-//	                dosRemote.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
-	                dosRemote.flush();
+	            	dos.writeUTF(eventType);
+	                dos.writeInt((int) (e.getX() * scaleX));
+	                dos.writeInt((int) (e.getY() * scaleY));
+//	                dos.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
+	                dos.flush();
 	                break;
 	                
 	            case "MOUSE_DRAGGED":
-	            	dosRemote.writeUTF(eventType);
-	                dosRemote.writeInt((int) (e.getX() * scaleX));
-	                dosRemote.writeInt((int) (e.getY() * scaleY));
-//	                dosRemote.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
-	                dosRemote.flush();
+	            	dos.writeUTF(eventType);
+	                dos.writeInt((int) (e.getX() * scaleX));
+	                dos.writeInt((int) (e.getY() * scaleY));
+//	                dos.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
+	                dos.flush();
 	                break;     
 	        }
         } catch (Exception ex) {
@@ -106,16 +108,16 @@ public class ImagePanel extends Canvas {
             
             if (eventType.equals("KEY_PRESS") || eventType.equals("KEY_RELEASE")) {
                 if (isSpecialKey(code)) {
-                    dosRemote.writeUTF(eventType);
-                    dosRemote.writeInt(code.getCode());
-                    dosRemote.flush();
+                    dos.writeUTF(eventType);
+                    dos.writeInt(code.getCode());
+                    dos.flush();
                 }
             }
             else if (eventType.equals("KEY_TYPED") && !character.isEmpty()) {
                 if (!isSpecialKey(code)) {
-                    dosRemote.writeUTF("KEY_TYPED");
-                    dosRemote.writeUTF(character);
-                    dosRemote.flush();
+                    dos.writeUTF("KEY_TYPED");
+                    dos.writeUTF(character);
+                    dos.flush();
                 }
             }
         } catch (IOException ex) {

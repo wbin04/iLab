@@ -1,11 +1,17 @@
 package Client;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
@@ -34,14 +40,19 @@ public class ClientListener {
     private DataOutputStream dosTM;
     private DataInputStream disTM;
     
+    private Socket socketStream;
+    private DataOutputStream dosStream;
+    private DataInputStream disStream;
+    
     private String stt;
 	private Dimension serverScreenSize;
-    private ImagePanel imagePanel;
+    private ImagePanel remotePanel;
     private Stage stage;
+    private ImagePanel streamPanel;
     
     private ClientTaskManager taskManager;
 
-	public ClientListener(Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, String stt) {
+	public ClientListener(Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, String stt) {
 		try {
 			this.socketChat = socketChat;
 						
@@ -56,6 +67,10 @@ public class ClientListener {
 			this.socketTM = socketTM;
 			disTM = new DataInputStream(socketTM.getInputStream());
 			dosTM = new DataOutputStream(socketTM.getOutputStream());
+			
+			this.socketStream = socketStream;
+			disStream = new DataInputStream(socketStream.getInputStream());
+			dosStream = new DataOutputStream(socketStream.getOutputStream());
 			
 			this.stt = stt;
 			
@@ -90,7 +105,8 @@ public class ClientListener {
 
         menuBar.getMenus().addAll(fileMenu, toolsMenu);
 
-        imagePanel = new ImagePanel(socketRemote, serverScreenSize);
+        remotePanel = new ImagePanel(socketRemote, serverScreenSize, true);
+        streamPanel = new ImagePanel(socketStream, serverScreenSize, false);
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int screenWidth = (int) screenSize.getWidth();
         int screenHeight = (int) screenSize.getHeight();
@@ -109,13 +125,13 @@ public class ClientListener {
             panelHeight = (int) (panelWidth / desiredAspectRatio);
         }
         
-        imagePanel.setWidth(1344);
-        imagePanel.setHeight(756);
+        remotePanel.setWidth(1344);
+        remotePanel.setHeight(756);
 
         
         BorderPane root = new BorderPane();
         root.setTop(menuBar);
-        root.setCenter(imagePanel);
+        root.setCenter(remotePanel);
 
         Scene scene = new Scene(root, 1344, 756);
         stage.setScene(scene);
@@ -138,14 +154,6 @@ public class ClientListener {
 	public void showView() {
 	    if (stage != null) {
 	        stage.show();
-	        try {
-				DataOutputStream dosChat = new DataOutputStream(socketChat.getOutputStream());
-				dosChat.writeUTF("REMOTE:");
-				dosChat.flush();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 	    } else {
 	        System.out.println("Stage is null, cannot show chat form.");
 	    }
@@ -243,7 +251,7 @@ public class ClientListener {
         alert.showAndWait();
     }
 	
-	public void startListening() {
+	public void startRemoteListening() {
 		new Thread(()->{
 			try {
 				while(true) {
@@ -262,11 +270,31 @@ public class ClientListener {
 							byte tmp[] = new byte[len];
 							disRemote.readFully(tmp);
 							ByteArrayInputStream bais = new ByteArrayInputStream(tmp);
-							BufferedImage img2 = ImageIO.read(bais);
+							BufferedImage img = ImageIO.read(bais);
 							
-							imagePanel.updateImage(img2);
+							remotePanel.updateImage(img);
 							Thread.sleep(50);
 							break;
+//						case "STREAM_DESKTOP": 
+////							showStream();
+//							try {
+//								int len2 = disStream.readInt();
+//								byte tmp2[] = new byte[len2];
+//								disStream.readFully(tmp2);
+//								ByteArrayInputStream bais2 = new ByteArrayInputStream(tmp2);
+//								BufferedImage img2 = ImageIO.read(bais2);
+//								
+//								
+//								Platform.runLater(() -> {
+//									streamPanel.updateImage(img2);
+//							    });
+//								
+//								Thread.sleep(50);
+//							} catch (Exception e) {
+//								// TODO: handle exception
+//								e.printStackTrace();
+//							}
+//							break;
 						case "TASK_MANAGER":
 							Platform.runLater(() -> {
 						        taskManager = new ClientTaskManager(socketTM);
@@ -280,6 +308,62 @@ public class ClientListener {
 	                        closeConnections();
 	                        return;
 						}			
+				}
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
+		}).start();
+	}
+	
+	public ImagePanel showStream(boolean isHover) {
+		if (isHover) {
+//			streamPanel.setWidth(576);
+//	        streamPanel.setHeight(324);
+	        animateCanvasResize(streamPanel, 576, 324);
+	    } else {
+//	    	streamPanel.setWidth(300);
+//	        streamPanel.setHeight(200);
+	        animateCanvasResize(streamPanel, 300, 200);
+	    }
+		return streamPanel;
+	}
+	
+	private void animateCanvasResize(Canvas canvas, double targetWidth, double targetHeight) {
+	    Timeline timeline = new Timeline(
+	        new KeyFrame(Duration.millis(300),
+	            new KeyValue(canvas.widthProperty(), targetWidth),
+	            new KeyValue(canvas.heightProperty(), targetHeight)
+	        )
+	    );
+	    timeline.play();
+	}
+
+	
+	public void startStreamListening() {
+		new Thread(()->{
+			try {
+				while(true) {
+					try {
+	                    int len2 = disStream.readInt();
+						byte tmp2[] = new byte[len2];
+						disStream.readFully(tmp2);
+						ByteArrayInputStream bais2 = new ByteArrayInputStream(tmp2);
+						BufferedImage img2 = ImageIO.read(bais2);
+						
+						
+						Platform.runLater(() -> {
+							streamPanel.updateImage(img2);
+					    });
+						
+						Thread.sleep(50);
+	                } catch (EOFException e) {
+	                    System.out.println("Server đã đóng kết nối (EOF).");
+	                    closeConnections();
+	                    break;
+	                }
+//					System.out.println("MessageType: " + messageType);
+						
 				}
 			} catch (Exception e) {
 				// TODO: handle exception
@@ -303,6 +387,10 @@ public class ClientListener {
 	        if (disTM != null) disTM.close();
 	        if (dosTM != null) dosTM.close();
 	        if (socketTM != null && !socketTM.isClosed()) socketTM.close();
+	        
+	        if (disStream != null) disStream.close();
+	        if (dosStream != null) dosStream.close();
+	        if (socketStream != null && !socketStream.isClosed()) socketStream.close();
 	        System.out.println("Tất cả kết nối đã được đóng.");
 	    } catch (IOException e) {
 	        e.printStackTrace();

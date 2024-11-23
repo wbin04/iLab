@@ -24,6 +24,7 @@ import javafx.geometry.NodeOrientation;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -62,6 +63,8 @@ public class ServerForm extends Application {
     private ScrollPane panelPane;
     @FXML
     private FlowPane clientContainer; 
+    @FXML
+    private CheckBox checkBox;
     
     private Map<Integer, ServerClientPanel> clientFormsMap;
     private Map<Integer, Boolean> clientConnected;
@@ -71,12 +74,15 @@ public class ServerForm extends Application {
     private List<Socket> listSocketRemote = new ArrayList<>();
     private List<Socket> listSocketFile = new ArrayList<>();
     private List<Socket> listSocketTM = new ArrayList<>();
+    private List<Socket> listSocketStream = new ArrayList<>();
     
     private ServerSocket serverSocket;
     private ServerSocket serverSocketChat;
     private ServerSocket serverSocketRemote;
     private ServerSocket serverSocketFile;
     private ServerSocket serverSocketTM;
+    private ServerSocket serverSocketStream;
+    
     private ServerForm controller;
     
     private boolean isRunning;
@@ -112,6 +118,32 @@ public class ServerForm extends Application {
     }
 
     private void setEvents(Stage stage) {
+    	checkBox.setOnAction(event -> {
+//    		if(checkBox.isSelected()) {
+//    			for(int n : clientFormsMap.keySet()) {
+//    				ServerClientPanel panel = clientFormsMap.get(n);
+//    				panel.setStreamView(true);
+//    			}
+//    		}
+//    		else {
+//    			for(int n : clientFormsMap.keySet()) {
+//    				ServerClientPanel panel = clientFormsMap.get(n);
+//    				panel.setStreamView(false);
+//    			}
+//    		}
+    		for(int n : clientFormsMap.keySet()) {
+    			if(clientConnected.get(n)) {
+    				ServerClientPanel panel = clientFormsMap.get(n);
+    				if(checkBox.isSelected()) {
+    					panel.setStreamView(true);
+    				}
+    				else {
+    					panel.setStreamView(false);
+    				}
+    			}
+    		}
+    	});
+    	
     	chatArea.heightProperty().addListener((observable, oldValue, newValue) -> {
     	    chatPane.setVvalue(1.0); 
     	});
@@ -152,6 +184,7 @@ public class ServerForm extends Application {
                 serverSocketRemote = new ServerSocket(port+2);
                 serverSocketFile = new ServerSocket(port+3);
                 serverSocketTM = new ServerSocket(port+4);
+                serverSocketStream = new ServerSocket(port+5);
 
                 Platform.runLater(() -> {
 					try {
@@ -194,12 +227,14 @@ public class ServerForm extends Application {
                         Socket socRemote = serverSocketRemote.accept();
                         Socket socFile = serverSocketFile.accept();
                         Socket socTM = serverSocketTM.accept();
+                        Socket socStream = serverSocketStream.accept();
 
                         listSocket.add(soc);
                         listSocketChat.add(socChat);
                         listSocketRemote.add(socRemote);
                         listSocketFile.add(socFile);
                         listSocketTM.add(socTM);
+                        listSocketStream.add(socStream);
             			
 
                         final Socket finalSoc = soc;
@@ -207,8 +242,9 @@ public class ServerForm extends Application {
                         final Socket finalSocRemote = socRemote;
                         final Socket finalSocFile = socFile;
                         final Socket finalSocTM = socTM;
+                        final Socket finalSocStream = socStream;
                         javafx.application.Platform.runLater(() -> {
-                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocRemote, finalSocFile, finalSocTM);
+                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocRemote, finalSocFile, finalSocTM, finalSocStream);
                         });
                         
 //                        dis.close();
@@ -251,7 +287,7 @@ public class ServerForm extends Application {
 		tfEmpty.setText("" + count);
     }
     
-    private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM) {
+    private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream) {
     	String[] parts = msg.split(",");
         int stt = Integer.parseInt(parts[0]);
         String name = parts[1];
@@ -262,7 +298,7 @@ public class ServerForm extends Application {
 		clientPanel.setName(name);
 		clientPanel.setStatus(true);
 		clientPanel.setSocketChat(socketChat);
-		clientPanel.setSocketRemote(socketRemote, socketFile, socketTM);
+		clientPanel.setSocketRemote(socketRemote, socketFile, socketTM, socketStream);
 		clientPanel.setEvents();
 		
 		tfConnected.setText("" + listSocket.size());
@@ -273,10 +309,10 @@ public class ServerForm extends Application {
         clientConnected.put(stt, true);
         
 
-		removeClientPanel(soc, socketChat, socketRemote, socketFile, socketTM, stt, name);
+		removeClientPanel(soc, socketChat, socketRemote, socketFile, socketTM, socketStream, stt, name);
     }
     
-    private void removeClientPanel(Socket soc, Socket socChat, Socket socRemote, Socket socFile, Socket socTM, int stt, String name) {
+    private void removeClientPanel(Socket soc, Socket socChat, Socket socRemote, Socket socFile, Socket socTM, Socket socStream, int stt, String name) {
     	new Thread(() -> {
             try {
             	DataInputStream dis = new DataInputStream(soc.getInputStream());
@@ -301,6 +337,7 @@ public class ServerForm extends Application {
                     	socRemote.close();
                     	socFile.close();
                     	socTM.close();
+                    	socStream.close();
                     	
                     	clientConnected.put(stt, false);
                     	ServerClientPanel clientPanel = clientFormsMap.get(stt); // tìm ra được clientPanel, cấp cho nó 1 socket, ban đầu khởi tạo bằng NULL
@@ -309,7 +346,7 @@ public class ServerForm extends Application {
                 		clientPanel.setName("");
                 		clientPanel.setStatus(false);
                 		clientPanel.setSocketChat(null);
-                		clientPanel.setSocketRemote(null, null, null);
+                		clientPanel.setSocketRemote(null, null, null, null);
                 		clientPanel.setEvents();
                 		
                     	break;
@@ -436,6 +473,9 @@ public class ServerForm extends Application {
             if (serverSocketTM != null && !serverSocketTM.isClosed()) {
             	serverSocketTM.close();
             }
+            if (serverSocketStream != null && !serverSocketStream.isClosed()) {
+            	serverSocketStream.close();
+            }
 
             for (Socket socket : listSocket) {
                 if (socket != null && !socket.isClosed()) {
@@ -494,12 +534,28 @@ public class ServerForm extends Application {
                     }
                 }
             }
+            
+            for (Socket socketStream : listSocketStream) {
+                if (socketStream != null && !socketStream.isClosed()) {
+                	try {
+                        DataOutputStream dos = new DataOutputStream(socketStream.getOutputStream());
+                        dos.writeUTF("SERVER_CLOSED");
+                        dos.flush();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        System.out.println("Lỗi đóng socketRemote ServerForm");
+                        appendText("Lỗi đóng socketFile ServerForm\n", false, false);
+                    }
+                }
+            }
 
             javafx.application.Platform.runLater(() -> {
             	appendText("Server đã được đóng.\n", false, false);
                 listSocket.clear();
                 listSocketChat.clear();
                 listSocketRemote.clear();
+                listSocketTM.clear();
+                listSocketStream.clear();
                 tfConnected.setText("0");
                 tfEmpty.setText("0");
                 clientContainer.getChildren().clear();

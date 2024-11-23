@@ -4,12 +4,23 @@ import java.io.IOException;
 import java.net.Socket;
 
 import Client.ClientListener;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.ScaleTransition;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class ServerClientPanel {
 	@FXML
@@ -26,6 +37,10 @@ public class ServerClientPanel {
 	private Button btnView;
 	@FXML
 	private Button btnFile;
+	@FXML
+	private GridPane gridPane;
+	@FXML
+	private BorderPane borderPane;
 	
 	private FXMLLoader loader;
 	private ServerClientPanel controller;
@@ -33,6 +48,7 @@ public class ServerClientPanel {
     private Socket socketRemote = null;
     private Socket socketFile = null;
     private Socket socketTM = null;
+    private Socket socketStream = null;
     
     private String stt;
     private String name;
@@ -40,6 +56,9 @@ public class ServerClientPanel {
     ServerChatForm serverChatForm;
     ClientListener clientListener;
     private long startTime;
+    
+//    private Stage stage = null;
+    private boolean isStream = false;
 	
 	public ServerClientPanel() {
 		loader = new FXMLLoader(getClass().getResource("ServerClientPanel.fxml"));
@@ -122,13 +141,15 @@ public class ServerClientPanel {
     	new Thread(serverChatForm).start();
 	}
 
-	public void setSocketRemote(Socket socketRemote, Socket socketFile, Socket socketTM) {
+	public void setSocketRemote(Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream) {
 		this.socketRemote = socketRemote;
 		this.socketFile = socketFile;
 		this.socketTM = socketTM;
+		this.socketStream = socketStream;
 		
-		clientListener = new ClientListener(this.socketChat, this.socketRemote, this.socketFile, this.socketTM, this.stt);
-		clientListener.startListening();
+		clientListener = new ClientListener(this.socketChat, this.socketRemote, this.socketFile, this.socketTM, this.socketStream, this.stt);
+		clientListener.startRemoteListening();
+		clientListener.startStreamListening();
 	}
 	
 	public void setEvents() {
@@ -156,5 +177,86 @@ public class ServerClientPanel {
 				e2.printStackTrace();
 			}
 		});
+		controller.gridPane.setOnMouseEntered(event -> {
+//			controller.gridPane.setPrefWidth(576);
+//			controller.gridPane.setPrefHeight(324);
+			animateResize(controller.gridPane, 576, 324);
+			
+			Pane pane = new Pane(clientListener.showStream(true));
+		    pane.setPrefWidth(576);
+		    pane.setPrefHeight(324);
+		    controller.borderPane.setCenter(pane);
+		    animateResize(controller.borderPane, 576, 324);
+		    
+			controller.lbNum.setVisible(false);
+			controller.lbStatus.setVisible(false);
+			controller.lbTime.setVisible(false);
+			controller.lbName.setVisible(false);
+			controller.btnChat.setVisible(true);
+			controller.btnView.setVisible(true);
+			controller.btnFile.setVisible(true);
+	    });
+		controller.gridPane.setOnMouseExited(event -> {
+//			controller.gridPane.setPrefWidth(300);
+//			controller.gridPane.setPrefHeight(200);
+			animateResize(controller.gridPane, 300, 200);
+			if(isStream) {
+				controller.borderPane.setCenter(clientListener.showStream(false));
+				animateResize(controller.borderPane, 300, 200);
+				controller.lbNum.setVisible(false);
+				controller.lbStatus.setVisible(false);
+				controller.lbTime.setVisible(false);
+				controller.lbName.setVisible(false);
+				controller.btnChat.setVisible(false);
+				controller.btnView.setVisible(false);
+				controller.btnFile.setVisible(false);
+			}
+			else {
+				controller.borderPane.setCenter(null);
+				animateResize(controller.borderPane, 300, 200);
+				controller.lbNum.setVisible(true);
+				controller.lbStatus.setVisible(true);
+				controller.lbTime.setVisible(true);
+				controller.lbName.setVisible(true);
+			}
+	    });
 	}
+	
+	public void setStreamView(boolean isStream) {
+		this.isStream = isStream;
+		if(isStream) {
+			controller.borderPane.setCenter(clientListener.showStream(false));
+			controller.lbNum.setVisible(false);
+			controller.lbStatus.setVisible(false);
+			controller.lbTime.setVisible(false);
+			controller.lbName.setVisible(false);
+			controller.btnChat.setVisible(false);
+			controller.btnView.setVisible(false);
+			controller.btnFile.setVisible(false);
+		}
+		else {
+			controller.borderPane.setCenter(null);
+			controller.lbNum.setVisible(true);
+			controller.lbStatus.setVisible(true);
+			controller.lbTime.setVisible(true);
+			controller.lbName.setVisible(true);
+			controller.btnChat.setVisible(true);
+			controller.btnView.setVisible(true);
+			controller.btnFile.setVisible(true);
+		}
+	}
+	
+	private void animateResize(Region pane, double targetWidth, double targetHeight) {
+	    Timeline timeline = new Timeline();
+
+	    KeyValue widthValue = new KeyValue(pane.prefWidthProperty(), targetWidth);
+	    KeyValue heightValue = new KeyValue(pane.prefHeightProperty(), targetHeight);
+
+	    KeyFrame keyFrame = new KeyFrame(Duration.millis(300), widthValue, heightValue);
+
+	    timeline.getKeyFrames().add(keyFrame);
+	    timeline.play();
+	}
+
+
 }

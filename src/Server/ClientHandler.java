@@ -17,6 +17,7 @@ public class ClientHandler implements Runnable{
 	private Socket socketRemote;
 	private Socket socketFile;
 	private Socket socketTM;
+	private Socket socketStream;
 	
 	private DataInputStream disRemote;
 	private DataOutputStream dosRemote;
@@ -27,14 +28,20 @@ public class ClientHandler implements Runnable{
 	private DataInputStream disTM;
 	private DataOutputStream dosTM;
 	
+	private DataInputStream disStream;
+	private DataOutputStream dosStream;
+	
 	private boolean isRunning;
 	
-	public ClientHandler(Socket socket, Socket socketFile, Socket socketTM) {
+	public ClientHandler(Socket socket, Socket socketFile, Socket socketTM, Socket socketStream) {
 		this.socketRemote = socket;
 		this.socketFile = socketFile;
 		this.socketTM = socketTM;
+		this.socketStream = socketStream;
+		
 		this.id = "1";
 		this.isRunning = true;
+		
 		try {
 			this.disRemote = new DataInputStream(socket.getInputStream());
 			this.dosRemote = new DataOutputStream(socket.getOutputStream());
@@ -44,6 +51,9 @@ public class ClientHandler implements Runnable{
 			
 			this.disTM = new DataInputStream(socketTM.getInputStream());
 			this.dosTM = new DataOutputStream(socketTM.getOutputStream());
+			
+			this.disStream = new DataInputStream(socketStream.getInputStream());
+			this.dosStream = new DataOutputStream(socketStream.getOutputStream());
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -76,6 +86,7 @@ public class ClientHandler implements Runnable{
          new Thread(this::handleFileTransfer).start();
          new Thread(this::sendRunningApps).start();
          new Thread(this::killApp).start(); 
+         new Thread(this::handleStreamDesktop).start();
 		//List apps
 		
 	}
@@ -177,6 +188,43 @@ public class ClientHandler implements Runnable{
 			// TODO: handle exception
 		}
 	}
+	
+	private void handleStreamDesktop() {
+        while (isRunning) {
+            try {
+            	
+                Robot r = new Robot();
+                Rectangle rectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+                BufferedImage img = r.createScreenCapture(rectangle);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(img, "png", baos);
+                byte[] imageBytes = baos.toByteArray();
+                
+                if (socketStream != null && !socketStream.isClosed()) {
+                    synchronized (dosStream) {
+//                    	dosRemote.writeUTF("STREAM_DESKTOP");  
+//                    	dosRemote.flush();
+                    	dosStream.writeInt(imageBytes.length);
+                    	dosStream.write(imageBytes);
+                    	dosStream.flush();
+                    }
+                }
+
+
+                Thread.sleep(50);
+            
+            } catch (SocketException e) {
+//                System.out.println("handleRemoteDesktop ClientHandler Socket closed: " + e.getMessage());
+            	e.printStackTrace();
+                break;
+            } catch (Exception e) {
+//                e.printStackTrace();
+            	System.out.println("Lỗi handleStreamDesktop ClientHandler");
+            	break;
+            }
+        }
+    }
+	
 	private void handleRemoteDesktop() {
         while (isRunning) {
             try {
@@ -439,6 +487,10 @@ public class ClientHandler implements Runnable{
             if (disTM != null) disTM.close();
             if (dosTM != null) dosTM.close();
             if (socketTM != null && !socketTM.isClosed()) socketTM.close();
+            
+            if (disStream != null) disStream.close();
+            if (dosStream != null) dosStream.close();
+            if (socketStream != null && !socketStream.isClosed()) socketStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

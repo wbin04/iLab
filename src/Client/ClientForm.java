@@ -88,6 +88,7 @@ public class ClientForm extends Application {
 				System.out.println(listMachines);
 				String[] machines = listMachines.split(",");
 
+				cbbNum.getItems().clear();
 				for (String machine : machines) {
 				    if (!machine.isEmpty()) { 
 				        cbbNum.getItems().add(machine);
@@ -133,13 +134,16 @@ public class ClientForm extends Application {
 			            	dos.flush();
 			            	
 			            	Thread.sleep(1000);
-						} catch (IOException e) {
+						} catch (Exception e) {
 							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+//							e.printStackTrace();
+							System.out.println("Server đã đóng kết nối");
+							btnConnect.setVisible(true);
+				        	flowPane.setVisible(false);
+				        	tfName.setDisable(true);
+				        	cbbNum.setDisable(true);
+				        	isRunning = false;
+						} 
 		            }
 	            }).start();
 			} catch (Exception e2) {
