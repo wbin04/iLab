@@ -5,12 +5,11 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.*;
+import java.net.*;
 import java.util.*;
 import java.util.List;
 import javax.imageio.ImageIO;
-
-import java.net.*;
-import java.io.*;
 
 public class ClientHandler implements Runnable{
 	private String id;
@@ -18,6 +17,7 @@ public class ClientHandler implements Runnable{
 	private Socket socketFile;
 	private Socket socketTM;
 	private Socket socketStream;
+	private Socket socketBD;
 	
 	private DataInputStream disRemote;
 	private DataOutputStream dosRemote;
@@ -31,13 +31,17 @@ public class ClientHandler implements Runnable{
 	private DataInputStream disStream;
 	private DataOutputStream dosStream;
 	
+	private DataInputStream disBD;
+	private DataOutputStream dosBD;
+	
 	private boolean isRunning;
 	
-	public ClientHandler(Socket socket, Socket socketFile, Socket socketTM, Socket socketStream) {
+	public ClientHandler(Socket socket, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
 		this.socketRemote = socket;
 		this.socketFile = socketFile;
 		this.socketTM = socketTM;
 		this.socketStream = socketStream;
+		this.socketBD = socketBD;
 		
 		this.id = "1";
 		this.isRunning = true;
@@ -54,6 +58,9 @@ public class ClientHandler implements Runnable{
 			
 			this.disStream = new DataInputStream(socketStream.getInputStream());
 			this.dosStream = new DataOutputStream(socketStream.getOutputStream());
+			
+			this.disBD = new DataInputStream(socketBD.getInputStream());
+			this.dosBD = new DataOutputStream(socketBD.getOutputStream());
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -87,8 +94,48 @@ public class ClientHandler implements Runnable{
          new Thread(this::sendRunningApps).start();
          new Thread(this::killApp).start(); 
          new Thread(this::handleStreamDesktop).start();
+         new Thread(this::handleBlockDomain).start();
 		//List apps
 		
+	}
+	
+	private void handleBlockDomain() {
+		while(isRunning) {
+			try {
+				String event = disBD.readUTF();
+				String ip = disBD.readUTF();
+				String name = disBD.readUTF();
+				
+				String blockCmd = "cmd.exe /c powershell -Command \"Start-Process powershell -ArgumentList '-Command \"New-NetFirewallRule -DisplayName ''Block IP " + name + "'' -Direction Outbound -Action Block -RemoteAddress " + ip + "\"' -Verb RunAs\"";
+				String removeCmd = "cmd.exe /c powershell -Command \"Start-Process powershell -ArgumentList '-Command \"Remove-NetFirewallRule -DisplayName ''Block IP " + name + "''\"' -Verb RunAs\"";
+				
+				String cmd;
+				if(event.equals("BLOCKED")) {
+					cmd = blockCmd;
+				}
+				else {
+					cmd = removeCmd;
+				}
+				
+				System.out.println(event);
+				System.out.println(cmd);
+				ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", cmd);
+				Process process = pb.start();
+				int exitCode = process.waitFor();
+				if (exitCode == 0) {
+					System.out.println(event + " thanh cong");
+					dosBD.writeUTF("SUCCESSED");
+				} else {
+					System.out.println(event + " that bai: " + exitCode);
+					dosBD.writeUTF("FAILED");
+	            }
+	            dosBD.flush();
+				
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	private List<String[]> getRunningApps() {
@@ -260,10 +307,8 @@ public class ClientHandler implements Runnable{
         }
     }
 	private void killApp() {
-		System.out.println(111);
 		while(isRunning) {
 			try {
-				System.out.println(111);
 				String appId = disTM.readUTF();
 		        System.out.println("Received kill request for app ID: " + appId);
 		        Process process = Runtime.getRuntime().exec("taskkill /F /PID " + appId);
@@ -295,8 +340,6 @@ public class ClientHandler implements Runnable{
             while (isRunning) {
                 if(disRemote.available() > 0) {
                 	String eventType = disRemote.readUTF();
-                    System.out.println("input: " + eventType);
-                    if(eventType.equals("REQUEST_RUNNING_APPS")) System.out.println("eventType la : " + eventType);
                     switch (eventType) {
                         case "MOUSE_PRESS":
                         case "MOUSE_RELEASE":
@@ -351,21 +394,6 @@ public class ClientHandler implements Runnable{
                             robot.delay(50);
                             pasteFromClipboard(robot);
                             break;
-
-
-//                        case "TRANSFER_FILE":
-//                        	handleFileTransfer();
-//                        	break;
-//                        case "REQUEST_RUNNING_APPS":
-//                        	new Thread(this::sendRunningApps).start();  
-//                        	new Thread(this::killApp).start();   
-//                        	killApp();
-//                        	break;
-//                        case "KILL_APP":
-//                        	new Thread(this::killApp).start(); 
-//                        	killApp();
-//                        	sendRunningApps();
-//                        	break;
                         case "SCREEN_SHOT":
                         	sendScreenShot();
                         	break;
@@ -377,7 +405,7 @@ public class ClientHandler implements Runnable{
                             closeAllConnections();
                             break;
                     }
-                    
+//                    Thread.sleep(50);
                 }
             }
         } catch (SocketException e) {

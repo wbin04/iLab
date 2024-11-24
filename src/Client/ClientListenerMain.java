@@ -12,6 +12,7 @@ public class ClientListenerMain {
 	private Socket socketFile;
 	private Socket socketTM;
 	private Socket socketStream;
+	private Socket socketBD;
     private ClientChatForm clientChatForm;
     private ClientHandler clientHandler;
 
@@ -22,11 +23,12 @@ public class ClientListenerMain {
         	socketFile = new Socket(ipAddress, port+3);
         	socketTM = new Socket(ipAddress, port+4);
         	socketStream = new Socket(ipAddress, port+5);
+        	socketBD = new Socket(ipAddress, port+6);
 			
         	clientChatForm = new ClientChatForm(socketChat, name, stage);
             new Thread(clientChatForm).start();
             
-            clientHandler = new ClientHandler(socketRemote, socketFile, socketTM, socketStream);
+            clientHandler = new ClientHandler(socketRemote, socketFile, socketTM, socketStream, socketBD);
 			new Thread(clientHandler).start();
 			
 			Platform.runLater(() -> {

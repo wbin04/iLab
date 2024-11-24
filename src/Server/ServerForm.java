@@ -75,6 +75,7 @@ public class ServerForm extends Application {
     private List<Socket> listSocketFile = new ArrayList<>();
     private List<Socket> listSocketTM = new ArrayList<>();
     private List<Socket> listSocketStream = new ArrayList<>();
+    private List<Socket> listSocketBD = new ArrayList<>();
     
     private ServerSocket serverSocket;
     private ServerSocket serverSocketChat;
@@ -82,6 +83,7 @@ public class ServerForm extends Application {
     private ServerSocket serverSocketFile;
     private ServerSocket serverSocketTM;
     private ServerSocket serverSocketStream;
+    private ServerSocket serverSocketBD;
     
     private ServerForm controller;
     
@@ -185,6 +187,7 @@ public class ServerForm extends Application {
                 serverSocketFile = new ServerSocket(port+3);
                 serverSocketTM = new ServerSocket(port+4);
                 serverSocketStream = new ServerSocket(port+5);
+                serverSocketBD = new ServerSocket(port+6);
 
                 Platform.runLater(() -> {
 					try {
@@ -228,6 +231,7 @@ public class ServerForm extends Application {
                         Socket socFile = serverSocketFile.accept();
                         Socket socTM = serverSocketTM.accept();
                         Socket socStream = serverSocketStream.accept();
+                        Socket socBD = serverSocketBD.accept();
 
                         listSocket.add(soc);
                         listSocketChat.add(socChat);
@@ -235,6 +239,7 @@ public class ServerForm extends Application {
                         listSocketFile.add(socFile);
                         listSocketTM.add(socTM);
                         listSocketStream.add(socStream);
+                        listSocketBD.add(socBD);
             			
 
                         final Socket finalSoc = soc;
@@ -243,8 +248,9 @@ public class ServerForm extends Application {
                         final Socket finalSocFile = socFile;
                         final Socket finalSocTM = socTM;
                         final Socket finalSocStream = socStream;
+                        final Socket finalSocBD = socBD;
                         javafx.application.Platform.runLater(() -> {
-                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocRemote, finalSocFile, finalSocTM, finalSocStream);
+                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocRemote, finalSocFile, finalSocTM, finalSocStream, finalSocBD);
                         });
                         
 //                        dis.close();
@@ -287,7 +293,7 @@ public class ServerForm extends Application {
 		tfEmpty.setText("" + count);
     }
     
-    private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream) {
+    private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
     	String[] parts = msg.split(",");
         int stt = Integer.parseInt(parts[0]);
         String name = parts[1];
@@ -298,7 +304,7 @@ public class ServerForm extends Application {
 		clientPanel.setName(name);
 		clientPanel.setStatus(true);
 		clientPanel.setSocketChat(socketChat);
-		clientPanel.setSocketRemote(socketRemote, socketFile, socketTM, socketStream);
+		clientPanel.setSocketRemote(socketRemote, socketFile, socketTM, socketStream, socketBD);
 		clientPanel.setEvents();
 		
 		tfConnected.setText("" + listSocket.size());
@@ -309,10 +315,10 @@ public class ServerForm extends Application {
         clientConnected.put(stt, true);
         
 
-		removeClientPanel(soc, socketChat, socketRemote, socketFile, socketTM, socketStream, stt, name);
+		removeClientPanel(soc, socketChat, socketRemote, socketFile, socketTM, socketStream, socketBD, stt, name);
     }
     
-    private void removeClientPanel(Socket soc, Socket socChat, Socket socRemote, Socket socFile, Socket socTM, Socket socStream, int stt, String name) {
+    private void removeClientPanel(Socket soc, Socket socChat, Socket socRemote, Socket socFile, Socket socTM, Socket socStream, Socket socketDM, int stt, String name) {
     	new Thread(() -> {
             try {
             	DataInputStream dis = new DataInputStream(soc.getInputStream());
@@ -346,7 +352,7 @@ public class ServerForm extends Application {
                 		clientPanel.setName("");
                 		clientPanel.setStatus(false);
                 		clientPanel.setSocketChat(null);
-                		clientPanel.setSocketRemote(null, null, null, null);
+                		clientPanel.setSocketRemote(null, null, null, null, null);
                 		clientPanel.setEvents();
                 		
                     	break;

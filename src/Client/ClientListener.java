@@ -44,6 +44,8 @@ public class ClientListener {
     private DataOutputStream dosStream;
     private DataInputStream disStream;
     
+    private Socket socketBD;
+    
     private String stt;
 	private Dimension serverScreenSize;
     private ImagePanel remotePanel;
@@ -51,8 +53,9 @@ public class ClientListener {
     private ImagePanel streamPanel;
     
     private ClientTaskManager taskManager;
+    private ClientBlockDomain blockDomain;
 
-	public ClientListener(Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, String stt) {
+	public ClientListener(Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, String stt) {
 		try {
 			this.socketChat = socketChat;
 						
@@ -72,11 +75,16 @@ public class ClientListener {
 			disStream = new DataInputStream(socketStream.getInputStream());
 			dosStream = new DataOutputStream(socketStream.getOutputStream());
 			
+			this.socketBD = socketBD;
+			DataOutputStream dos = new DataOutputStream(socketBD.getOutputStream());
+			
 			this.stt = stt;
 			
 			int serverWidth = disRemote.readInt();
 			int serverHeight = disRemote.readInt();
 			serverScreenSize = new Dimension(serverWidth, serverHeight);
+			
+			blockDomain = new ClientBlockDomain(socketBD);
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
@@ -147,7 +155,7 @@ public class ClientListener {
         
 //        taskManagerMenu.setOnAction(event -> sendCommand("REQUEST_RUNNING_APPS"));
         taskManagerMenu.setOnAction(event -> taskManager.show());
-        blockDomainMenu.setOnAction(event -> showDomainInputDialog());
+        blockDomainMenu.setOnAction(event -> showBlockedDomain());
         shutDownMenu.setOnAction(event -> sendCommand("SHUT_DOWN"));
     }
 	
@@ -213,6 +221,10 @@ public class ClientListener {
 		}
 	}
 	
+	public void showBlockedDomain() {
+		blockDomain.show();
+	}
+	
 	public void showDomainInputDialog() {
 		TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Nhập tên miền");
@@ -275,26 +287,6 @@ public class ClientListener {
 							remotePanel.updateImage(img);
 							Thread.sleep(50);
 							break;
-//						case "STREAM_DESKTOP": 
-////							showStream();
-//							try {
-//								int len2 = disStream.readInt();
-//								byte tmp2[] = new byte[len2];
-//								disStream.readFully(tmp2);
-//								ByteArrayInputStream bais2 = new ByteArrayInputStream(tmp2);
-//								BufferedImage img2 = ImageIO.read(bais2);
-//								
-//								
-//								Platform.runLater(() -> {
-//									streamPanel.updateImage(img2);
-//							    });
-//								
-//								Thread.sleep(50);
-//							} catch (Exception e) {
-//								// TODO: handle exception
-//								e.printStackTrace();
-//							}
-//							break;
 						case "TASK_MANAGER":
 							Platform.runLater(() -> {
 						        taskManager = new ClientTaskManager(socketTM);

@@ -49,6 +49,7 @@ public class ServerClientPanel {
     private Socket socketFile = null;
     private Socket socketTM = null;
     private Socket socketStream = null;
+    private Socket socketBD = null;
     
     private String stt;
     private String name;
@@ -141,13 +142,14 @@ public class ServerClientPanel {
     	new Thread(serverChatForm).start();
 	}
 
-	public void setSocketRemote(Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream) {
+	public void setSocketRemote(Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
 		this.socketRemote = socketRemote;
 		this.socketFile = socketFile;
 		this.socketTM = socketTM;
 		this.socketStream = socketStream;
+		this.socketBD = socketBD;
 		
-		clientListener = new ClientListener(this.socketChat, this.socketRemote, this.socketFile, this.socketTM, this.socketStream, this.stt);
+		clientListener = new ClientListener(this.socketChat, this.socketRemote, this.socketFile, this.socketTM, this.socketStream, this.socketBD, this.stt);
 		clientListener.startRemoteListening();
 		clientListener.startStreamListening();
 	}
