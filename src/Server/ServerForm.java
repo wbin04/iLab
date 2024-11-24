@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import Client.ClientFileSender;
 import javafx.application.Application;
@@ -35,6 +36,10 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class ServerForm extends Application {
+	@FXML
+    private TextField tfClassName;
+    @FXML
+    private TextField tfClassCode;
     @FXML
     private TextField tfPort;
     @FXML
@@ -77,6 +82,7 @@ public class ServerForm extends Application {
     private List<Socket> listSocketStream = new ArrayList<>();
     private List<Socket> listSocketBD = new ArrayList<>();
     
+    private ServerSocket serverSocketInit;
     private ServerSocket serverSocket;
     private ServerSocket serverSocketChat;
     private ServerSocket serverSocketRemote;
@@ -88,6 +94,7 @@ public class ServerForm extends Application {
     private ServerForm controller;
     
     private boolean isRunning;
+    private int port;
 
     public static void main(String[] args) {
     	launch(args);
@@ -156,11 +163,10 @@ public class ServerForm extends Application {
         
         btnOpen.setOnAction(event -> {
         	try {
-        		isRunning = true;
-        		chatArea.getChildren().clear();
-            	loadPanel();
-            	startServerInBackground();
-            	setStatus(false);
+            	port = Integer.parseInt(tfPort.getText());
+        		setServerCode();
+        		
+
             	stage.setOnCloseRequest(event2 -> {
             		event2.consume(); 
             	});
@@ -177,10 +183,60 @@ public class ServerForm extends Application {
         });
     }
     
+    private void setServerCode() {
+        int serverPort = port-1;
+        int lookupServerPort = 1024;
+
+        new Thread(() -> {
+            LookupServer lookupServer = new LookupServer();
+            lookupServer.init(lookupServerPort);  
+        }).start();
+
+        new Thread(() -> {
+            try {
+            	String className = tfClassName.getText();
+                String code = UUID.randomUUID().toString().substring(0, 6);
+//                System.out.println("Mã kết nối: " + code);
+
+
+                String lookupServerIP = InetAddress.getLocalHost().getHostAddress();  
+                Socket lookupSocket = new Socket(lookupServerIP, lookupServerPort);
+                DataOutputStream dos = new DataOutputStream(lookupSocket.getOutputStream());
+                DataInputStream dis = new DataInputStream(lookupSocket.getInputStream());
+
+                dos.writeUTF("REGISTER");
+                dos.writeUTF(code);
+                dos.writeUTF(InetAddress.getLocalHost().getHostAddress() + ":" + tfPort.getText() + ":" + className);
+
+                if (dis.readUTF().equals("REGISTERED")) {
+                    System.out.println("Đăng ký thành công trên lookup server.");
+
+                    Platform.runLater(() -> {
+                        isRunning = true;
+                        chatArea.getChildren().clear();  
+                        loadPanel();
+                        startServerInBackground();
+                        setStatus(false);
+                        tfClassCode.setText(code);
+                    });
+                }
+                lookupSocket.close();
+
+//                serverSocketInit = new ServerSocket(serverPort);
+//                while (true) {
+//                    Socket clientSocket = serverSocketInit.accept();
+//                    System.out.println("Client kết nối từ: " + clientSocket.getInetAddress() + clientSocket.getPort());
+//                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    
     private void startServerInBackground() {
         new Thread(() -> {
             try {
-            	int port = Integer.parseInt(tfPort.getText());
                 serverSocket = new ServerSocket(port);
                 serverSocketChat = new ServerSocket(port+1);
                 serverSocketRemote = new ServerSocket(port+2);
@@ -273,7 +329,7 @@ public class ServerForm extends Application {
         }).start();
     }
 
-    private void loadPanel() throws IOException {
+    private void loadPanel() {
         clientContainer.getChildren().clear(); 
         clientFormsMap = new HashMap<>();
         clientConnected = new HashMap<>();
@@ -331,8 +387,10 @@ public class ServerForm extends Application {
 
                 		
                 		appendText(name + " ở máy số " + stt + " đã ngắt kết nối", false, false);
-                    	
                     	listSocket.remove(soc);
+                		tfConnected.setText("" + listSocket.size());
+                		tfEmpty.setText("" + (10-listSocket.size()));
+                    	
                     	listSocketChat.remove(socChat);
                     	listSocketRemote.remove(socRemote);
                     	listSocketFile.remove(socFile);
@@ -347,9 +405,9 @@ public class ServerForm extends Application {
                     	
                     	clientConnected.put(stt, false);
                     	ServerClientPanel clientPanel = clientFormsMap.get(stt); // tìm ra được clientPanel, cấp cho nó 1 socket, ban đầu khởi tạo bằng NULL
-                		clientPanel.setStartTime(-1);
+//                		clientPanel.setStartTime(-1);
                 		
-                		clientPanel.setName("");
+//                		clientPanel.setName("");
                 		clientPanel.setStatus(false);
                 		clientPanel.setSocketChat(null);
                 		clientPanel.setSocketRemote(null, null, null, null, null);
@@ -367,10 +425,14 @@ public class ServerForm extends Application {
     }
     
     private void setStatus(boolean status) {
+    	tfClassName.setEditable(status);
     	tfPort.setEditable(status);
     	tfNum.setEditable(status);
+    	
+    	tfClassCode.setDisable(status);
     	tfConnected.setDisable(status);
     	tfEmpty.setDisable(status);
+    	
     	btnOpen.setDisable(!status);
     	btnClose.setDisable(status);
     	
@@ -464,6 +526,9 @@ public class ServerForm extends Application {
         try {
             isRunning = false;
             
+            if (serverSocketInit != null && !serverSocketInit.isClosed()) {
+            	serverSocketInit.close();
+            }
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
             }
@@ -481,6 +546,9 @@ public class ServerForm extends Application {
             }
             if (serverSocketStream != null && !serverSocketStream.isClosed()) {
             	serverSocketStream.close();
+            }
+            if (serverSocketBD != null && !serverSocketBD.isClosed()) {
+            	serverSocketBD.close();
             }
 
             for (Socket socket : listSocket) {

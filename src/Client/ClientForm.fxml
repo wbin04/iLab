@@ -9,56 +9,52 @@
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.StackPane?>
 
-<SplitPane id="container" dividerPositions="0.6635906040268457" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="300.0" prefWidth="600.0" stylesheets="@ClientForm.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.ClientForm">
+<SplitPane id="container" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="300.0" prefWidth="450.0" stylesheets="@ClientForm.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.ClientForm">
   <items>
       <GridPane alignment="CENTER" prefHeight="155.0" prefWidth="400.0" stylesheets="@ClientForm.css">
         <columnConstraints>
           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
         </columnConstraints>
         <rowConstraints>
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css">
+            <FlowPane alignment="CENTER" hgap="10.0" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css">
                <children>
-                  <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Nhập IP:" textAlignment="CENTER" />
-                  <TextField fx:id="tfIP" prefHeight="25.0" prefWidth="130.0" stylesheets="@ClientForm.css" text="192.168.1.5" />
+                  <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="120.0" stylesheets="@ClientForm.css" text="Nhập mã lớp: " textAlignment="CENTER" />
+                  <TextField fx:id="tfClassCode" alignment="CENTER" prefHeight="25.0" prefWidth="150.0" stylesheets="@ClientForm.css" />
+                  <Button fx:id="btnFind" mnemonicParsing="false" prefHeight="26.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Tìm" />
                </children>
             </FlowPane>
-            <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.rowIndex="1">
+            <FlowPane alignment="CENTER" hgap="40.0" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.rowIndex="1">
                <children>
-                  <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Nhập cổng:" textAlignment="CENTER" />
-                  <TextField fx:id="tfPort" prefHeight="25.0" prefWidth="130.0" stylesheets="@ClientForm.css" text="2222" />
+                  <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Tên lớp: " textAlignment="CENTER" />
+                  <TextField fx:id="tfClassName" alignment="CENTER" editable="false" prefHeight="25.0" prefWidth="250.0" stylesheets="@ClientForm.css" />
                </children>
             </FlowPane>
-            <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.columnIndex="1">
+            <FlowPane alignment="CENTER" hgap="40.0" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.rowIndex="2">
                <children>
                   <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Nhập tên:" textAlignment="CENTER" />
-                  <TextField fx:id="tfName" disable="true" prefHeight="25.0" prefWidth="130.0" stylesheets="@ClientForm.css" text="aaa" />
+                  <TextField fx:id="tfName" alignment="CENTER" disable="true" prefHeight="25.0" prefWidth="250.0" stylesheets="@ClientForm.css" text="aaa" />
                </children>
             </FlowPane>
-            <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <FlowPane alignment="CENTER" hgap="50.0" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.rowIndex="3">
                <children>
                   <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Chọn máy:" textAlignment="CENTER" />
                   <ComboBox fx:id="cbbNum" disable="true" prefHeight="25.0" prefWidth="130.0" stylesheets="@ClientForm.css" />
                </children>
             </FlowPane>
-         </children>
-      </GridPane>
-      <StackPane>
-         <children>
-            <Button fx:id="btnConnect" mnemonicParsing="false" prefHeight="26.0" stylesheets="@ClientForm.css" text="Kết nối" />
-            <FlowPane fx:id="flowPane" alignment="CENTER" hgap="150.0" prefHeight="200.0" prefWidth="200.0" StackPane.alignment="CENTER">
+            <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="4">
                <children>
-                  <Button fx:id="btnDisconnect" alignment="CENTER" mnemonicParsing="false" stylesheets="@ClientForm.css" text="Huỷ kết nối" />
                   <Button fx:id="btnJoin" alignment="CENTER" mnemonicParsing="false" stylesheets="@ClientForm.css" text="Vào phòng" />
                </children>
             </FlowPane>
          </children>
-      </StackPane>
+      </GridPane>
   </items>
 </SplitPane>

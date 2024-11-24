@@ -65,14 +65,22 @@ public class ServerClientPanel {
 		loader = new FXMLLoader(getClass().getResource("ServerClientPanel.fxml"));
 	}
 	
-	public Parent getPanel(int stt) throws IOException {
-        Parent clientPanel = loader.load();
-
-        controller = loader.getController();
-        setNumMachine(stt);
-        setStatus(false);
+	public Parent getPanel(int stt) {
+        Parent clientPanel;
+		try {
+			clientPanel = loader.load();
+			controller = loader.getController();
+	        setNumMachine(stt);
+	        setStatus(false);
+	        
+	        return clientPanel;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
         
-        return clientPanel;
 	}
 	
 	public void setNumMachine(int stt) {

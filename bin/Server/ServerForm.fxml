@@ -25,52 +25,53 @@
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
               </columnConstraints>
               <rowConstraints>
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <FlowPane id="flowpane" alignment="CENTER" columnHalignment="CENTER" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0">
+                  <FlowPane id="flowpane" alignment="CENTER" columnHalignment="CENTER" hgap="80.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="1">
                      <children>
-                        <Label prefHeight="20.0" prefWidth="130.0" style="-fx-font-weight: bold;" text="Nhập cổng:" textAlignment="CENTER" />
-                        <TextField fx:id="tfPort" alignment="CENTER" prefHeight="26.0" prefWidth="75.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;" text="2222">
+                        <Label prefHeight="20.0" prefWidth="120.0" style="-fx-font-weight: bold;" text="Nhập cổng:" textAlignment="CENTER" />
+                        <TextField fx:id="tfPort" alignment="CENTER" prefHeight="26.0" prefWidth="100.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;" text="2222">
                            <cursor>
                               <Cursor fx:constant="TEXT" />
                            </cursor>
                         </TextField>
                      </children>
                   </FlowPane>
-                  <FlowPane alignment="CENTER" columnHalignment="CENTER" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="1">
+                  <FlowPane alignment="CENTER" columnHalignment="CENTER" hgap="80.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="2">
                      <children>
-                        <Label prefHeight="20.0" prefWidth="130.0" style="-fx-font-weight: bold;" text="Tổng số máy:" />
-                        <TextField fx:id="tfNum" alignment="CENTER" prefHeight="26.0" prefWidth="75.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;" text="10">
+                        <Label prefHeight="20.0" prefWidth="120.0" style="-fx-font-weight: bold;" text="Tổng số máy:" />
+                        <TextField fx:id="tfNum" alignment="CENTER" prefHeight="26.0" prefWidth="100.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;" text="10">
                            <cursor>
                               <Cursor fx:constant="TEXT" />
                            </cursor>
                         </TextField>
                      </children>
                   </FlowPane>
-                  <FlowPane alignment="CENTER" columnHalignment="CENTER" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1">
+                  <FlowPane alignment="CENTER" columnHalignment="CENTER" hgap="80.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                      <children>
-                        <Label prefWidth="130.0" style="-fx-font-weight: bold;" text="Đã kết nối:" textAlignment="CENTER" />
-                        <TextField fx:id="tfConnected" alignment="CENTER" editable="false" prefHeight="26.0" prefWidth="75.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;" text="0">
+                        <Label prefWidth="120.0" style="-fx-font-weight: bold;" text="Đã kết nối:" textAlignment="CENTER" />
+                        <TextField fx:id="tfConnected" alignment="CENTER" editable="false" prefHeight="26.0" prefWidth="100.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;" text="0">
                            <cursor>
                               <Cursor fx:constant="TEXT" />
                            </cursor>
                         </TextField>
                      </children>
                   </FlowPane>
-                  <FlowPane alignment="CENTER" columnHalignment="CENTER" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER">
+                  <FlowPane alignment="CENTER" columnHalignment="CENTER" hgap="80.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER">
                      <children>
-                        <Label prefHeight="20.0" prefWidth="130.0" style="-fx-font-weight: bold;" text="Còn trống:" textAlignment="CENTER" />
-                        <TextField fx:id="tfEmpty" alignment="CENTER" editable="false" prefHeight="26.0" prefWidth="75.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;" text="0">
+                        <Label prefHeight="20.0" prefWidth="120.0" style="-fx-font-weight: bold;" text="Còn trống:" textAlignment="CENTER" />
+                        <TextField fx:id="tfEmpty" alignment="CENTER" editable="false" prefHeight="26.0" prefWidth="100.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;" text="0">
                            <cursor>
                               <Cursor fx:constant="TEXT" />
                            </cursor>
                         </TextField>
                      </children>
                   </FlowPane>
-                  <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="2">
+                  <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="3">
                      <children>
                         <Button id="btnOpen" fx:id="btnOpen" mnemonicParsing="false" stylesheets="@ServerForm.css" text="Mở Server" textAlignment="CENTER">
                            <cursor>
@@ -82,13 +83,33 @@
                         </Button>
                      </children>
                   </FlowPane>
-                  <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                  <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
                      <children>
                         <Button id="btnClose" fx:id="btnClose" mnemonicParsing="false" stylesheets="@ServerForm.css" text="Đóng Server" textAlignment="CENTER">
                            <cursor>
                               <Cursor fx:constant="HAND" />
                            </cursor>
                         </Button>
+                     </children>
+                  </FlowPane>
+                  <FlowPane id="flowpane" alignment="CENTER" columnHalignment="CENTER" hgap="20.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0">
+                     <children>
+                        <Label prefHeight="20.0" prefWidth="80.0" style="-fx-font-weight: bold;" text="Tên lớp:" textAlignment="CENTER" />
+                        <TextField fx:id="tfClassName" alignment="CENTER" prefHeight="26.0" prefWidth="200.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;" text="PBL4">
+                           <cursor>
+                              <Cursor fx:constant="TEXT" />
+                           </cursor>
+                        </TextField>
+                     </children>
+                  </FlowPane>
+                  <FlowPane alignment="CENTER" columnHalignment="CENTER" hgap="70.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1">
+                     <children>
+                        <Label prefWidth="80.0" style="-fx-font-weight: bold;" text="Mã lớp:" textAlignment="CENTER" />
+                        <TextField fx:id="tfClassCode" alignment="CENTER" editable="false" prefHeight="26.0" prefWidth="150.0" style="-fx-border-color: #000; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-font-weight: bold;">
+                           <cursor>
+                              <Cursor fx:constant="TEXT" />
+                           </cursor>
+                        </TextField>
                      </children>
                   </FlowPane>
                </children>
