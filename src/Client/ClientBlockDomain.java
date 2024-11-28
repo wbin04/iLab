@@ -6,14 +6,12 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
@@ -51,7 +49,6 @@ public class ClientBlockDomain extends Stage{
 			setEvents();
 			initializeTable();
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 	}
@@ -70,7 +67,6 @@ public class ClientBlockDomain extends Stage{
 	        this.setResizable(false);
 	        this.hide();;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

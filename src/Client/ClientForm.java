@@ -60,7 +60,6 @@ public class ClientForm extends Application {
 	         controller.setEvents();
 	         controller.setStatus(true);
 		} catch (IOException e) {
-			// TODO: handle exception
 			System.out.println("ClientForm loi start: " + e.getMessage());
 		}
 	}
@@ -76,45 +75,44 @@ public class ClientForm extends Application {
 	        try {
 	            String localIP = InetAddress.getLocalHost().getHostAddress(); 
 	            String[] octets = localIP.split("\\.");  
-	            String temp = octets[0] + "." + octets[1] + ".";
+	            String temp = octets[0] + "." + octets[1] + "." + octets[2] + ".";
 	            boolean found = false;
 
-	            for (int c = 0; c <= 255 && !found; c++) {  
-	                for (int d = 1; d <= 254 && !found; d++) {  
-	                    String ip = temp + c + "." + d;
-	                    try (Socket lookupSocket = new Socket()) {  
-	                    	lookupSocket.connect(new InetSocketAddress(ip, lookupServerPort), 50);
-	                        DataOutputStream dosTemp = new DataOutputStream(lookupSocket.getOutputStream());
-	                        DataInputStream disTemp = new DataInputStream(lookupSocket.getInputStream());
+//	            for (int c = 10; c <= 254 && !found; c++) 
+                for (int d = 1; d <= 254 && !found; d++) {  
+                    String ip = temp + d;
+                    try (Socket lookupSocket = new Socket()) {  
+                    	lookupSocket.connect(new InetSocketAddress(ip, lookupServerPort), 100);
+                        DataOutputStream dosTemp = new DataOutputStream(lookupSocket.getOutputStream());
+                        DataInputStream disTemp = new DataInputStream(lookupSocket.getInputStream());
 
-	                        String code = tfClassCode.getText();  
+                        String code = tfClassCode.getText();  
 
-	                        dosTemp.writeUTF("LOOKUP");
-	                        dosTemp.writeUTF(code);
+                        dosTemp.writeUTF("LOOKUP");
+                        dosTemp.writeUTF(code);
 
-	                        String serverInfo = disTemp.readUTF();
-	                        System.out.println("Phản hồi từ server: " + serverInfo);
+                        String serverInfo = disTemp.readUTF();
+                        System.out.println("Phản hồi từ server: " + serverInfo);
 
-	                        if (serverInfo.equals("NOT_FOUND")) {
-	                            continue;  
-	                        }
+                        if (serverInfo.equals("NOT_FOUND")) {
+                            continue;  
+                        }
 
-	                        String[] parts = serverInfo.split(":");
-	                        ipAddress = parts[0];
-	                        port = Integer.parseInt(parts[1]);
-	                        String name = parts[2];
-	                        tfClassName.setText(name);
+                        String[] parts = serverInfo.split(":");
+                        ipAddress = parts[0];
+                        port = Integer.parseInt(parts[1]);
+                        String name = parts[2];
+                        tfClassName.setText(name);
 
-	                        socket = new Socket(ipAddress, port);
-	                        System.out.println("Kết nối đến server thành công tại IP: " + ipAddress);
+                        socket = new Socket(ipAddress, port);
+                        System.out.println("Kết nối đến server thành công tại IP: " + ipAddress);
 
-	                        found = true;  
-	                        connectToServer();  
-	                    } catch (IOException e) {
-	                        System.out.println("Không kết nối được đến IP: " + ip);
-	                    }
-	                }
-	            }
+                        found = true;  
+                        connectToServer();  
+                    } catch (IOException e) {
+                        System.out.println("Không kết nối được đến IP: " + ip);
+                    }
+                }
 
 	            if (!found) {
 	                Platform.runLater(() -> System.out.println("Không tìm thấy LookupServer nào."));
@@ -165,7 +163,6 @@ public class ClientForm extends Application {
 					dos.writeUTF("DISCONNECTED");
 					dos.flush();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
         	}
@@ -200,7 +197,6 @@ public class ClientForm extends Application {
 			            	
 			            	Thread.sleep(1000);
 						} catch (Exception e) {
-							// TODO Auto-generated catch block
 //							e.printStackTrace();
 							System.out.println("Server đã đóng kết nối");
 							setStatus(true);
@@ -209,7 +205,6 @@ public class ClientForm extends Application {
 		            }
 	            }).start();
 			} catch (Exception e2) {
-				// TODO: handle exception
 				System.out.println("Loi btnJoin ClientLoginForm");
 				setStatus(true);
 	        	isRunning = false;

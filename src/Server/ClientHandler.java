@@ -13,11 +13,15 @@ import javax.imageio.ImageIO;
 
 public class ClientHandler implements Runnable{
 	private String id;
+	private Socket socketImg;
 	private Socket socketRemote;
 	private Socket socketFile;
 	private Socket socketTM;
 	private Socket socketStream;
-	private Socket socketBD;
+//	private Socket socketBD;
+	
+	private DataInputStream disImg;
+	private DataOutputStream dosImg;
 	
 	private DataInputStream disRemote;
 	private DataOutputStream dosRemote;
@@ -36,19 +40,23 @@ public class ClientHandler implements Runnable{
 	
 	private boolean isRunning;
 	
-	public ClientHandler(Socket socket, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
-		this.socketRemote = socket;
+	public ClientHandler(Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
+		this.socketImg = socketImg;
+		this.socketRemote = socketRemote;
 		this.socketFile = socketFile;
 		this.socketTM = socketTM;
 		this.socketStream = socketStream;
-		this.socketBD = socketBD;
+//		this.socketBD = socketBD;
 		
 		this.id = "1";
 		this.isRunning = true;
 		
 		try {
-			this.disRemote = new DataInputStream(socket.getInputStream());
-			this.dosRemote = new DataOutputStream(socket.getOutputStream());
+			this.disImg = new DataInputStream(socketImg.getInputStream());
+			this.dosImg = new DataOutputStream(socketImg.getOutputStream());
+			
+			this.disRemote = new DataInputStream(socketRemote.getInputStream());
+			this.dosRemote = new DataOutputStream(socketRemote.getOutputStream());
 			
 			this.disFile = new DataInputStream(socketFile.getInputStream());
 			this.dosFile = new DataOutputStream(socketFile.getOutputStream());
@@ -62,7 +70,6 @@ public class ClientHandler implements Runnable{
 			this.disBD = new DataInputStream(socketBD.getInputStream());
 			this.dosBD = new DataOutputStream(socketBD.getOutputStream());
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 	}
@@ -77,16 +84,14 @@ public class ClientHandler implements Runnable{
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		 Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
          try {
 			dosRemote.writeInt(screenSize.width);
 			dosRemote.writeInt(screenSize.height);
 			dosRemote.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+         } catch (IOException e) {
 			e.printStackTrace();
-		}
+         }
          // Them luong chat vao day
          new Thread(this::handleClientEvents).start();
          new Thread(this::handleRemoteDesktop).start();
@@ -132,7 +137,6 @@ public class ClientHandler implements Runnable{
 	            dosBD.flush();
 				
 			} catch (Exception e) {
-				// TODO: handle exception
 				e.printStackTrace();
 			}
 		}
@@ -167,22 +171,19 @@ public class ClientHandler implements Runnable{
 	private void sendRunningApps() {
 //	    while(isRunning) {
 	    	try {
-//		    	 synchronized(dosTM) {
-		    		 dosRemote.writeUTF("TASK_MANAGER");  
-		             int preSize = 0;
-		             while(isRunning) {
-		            	 List<String[]> apps = getRunningApps();
-			             if(apps.size() != preSize) {
-			            	 dosTM.writeInt(apps.size());  
-				             for (String[] app : apps) {
-				            	 dosTM.writeUTF(app[0]);  
-				            	 dosTM.writeUTF(app[1]);  
-				             }
-				             dosTM.flush();
-				             preSize = apps.size();
+	             int preSize = 0;
+	             while(isRunning) {
+	            	 List<String[]> apps = getRunningApps();
+		             if(apps.size() != preSize) {
+		            	 dosTM.writeInt(apps.size());  
+			             for (String[] app : apps) {
+			            	 dosTM.writeUTF(app[0]);  
+			            	 dosTM.writeUTF(app[1]);  
 			             }
+			             dosTM.flush();
+			             preSize = apps.size();
 		             }
-//		         }
+	             }
 		        
 		    } catch (IOException e) {
 		        e.printStackTrace();
@@ -192,47 +193,40 @@ public class ClientHandler implements Runnable{
 	
 	private void sendScreenShot() {
 		try {
-			synchronized(dosRemote) {
-				Robot r = new Robot();
-				Rectangle rectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-				BufferedImage img = r.createScreenCapture(rectangle);
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				ImageIO.write(img, "png", baos);
-				byte[] imageBytes = baos.toByteArray();
-				
-				dosRemote.writeUTF("SCREENSHOT");
-				dosRemote.writeInt(imageBytes.length);
-				dosRemote.write(imageBytes);
-				dosRemote.flush();
-			}
+			Robot r = new Robot();
+			Rectangle rectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+			BufferedImage img = r.createScreenCapture(rectangle);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ImageIO.write(img, "png", baos);
+			byte[] imageBytes = baos.toByteArray();
+			
+			dosRemote.writeUTF("SCREENSHOT");
+			dosRemote.writeInt(imageBytes.length);
+			dosRemote.write(imageBytes);
+			dosRemote.flush();
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 	}
 	
 	public void sendMessage(String message) {
 		try {
-			synchronized(dosRemote) {
-				dosRemote.writeUTF(message);
-				dosRemote.flush();
-			}
+			dosRemote.writeUTF(message);
+			dosRemote.flush();
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		}
 	}
 	
 	private void commandShutDown() {
 		try {
 			Runtime.getRuntime().exec("shutdown -s -t 3600");
-			synchronized (dosRemote) {
-				dosRemote.writeUTF("SHUTDOWN");
-				dosRemote.writeUTF("Máy tính sẽ được tắt sau 60 phút");
-				dosRemote.flush();
-			}
+			dosRemote.writeUTF("SHUTDOWN");
+			dosRemote.writeUTF("Máy tính sẽ được tắt sau 60 phút");
+			dosRemote.flush();
 			
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		}
 	}
 	
@@ -248,17 +242,13 @@ public class ClientHandler implements Runnable{
                 byte[] imageBytes = baos.toByteArray();
                 
                 if (socketStream != null && !socketStream.isClosed()) {
-                    synchronized (dosStream) {
-//                    	dosRemote.writeUTF("STREAM_DESKTOP");  
-//                    	dosRemote.flush();
-                    	dosStream.writeInt(imageBytes.length);
-                    	dosStream.write(imageBytes);
-                    	dosStream.flush();
-                    }
+                	dosStream.writeInt(imageBytes.length);
+                	dosStream.write(imageBytes);
+                	dosStream.flush();
                 }
 
 
-                Thread.sleep(50);
+                Thread.sleep(10);
             
             } catch (SocketException e) {
 //                System.out.println("handleRemoteDesktop ClientHandler Socket closed: " + e.getMessage());
@@ -280,20 +270,18 @@ public class ClientHandler implements Runnable{
                 Rectangle rectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
                 BufferedImage img = r.createScreenCapture(rectangle);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(img, "png", baos);
+                ImageIO.write(img, "jpg", baos);
                 byte[] imageBytes = baos.toByteArray();
                 
-                if (socketRemote != null && !socketRemote.isClosed()) {
-                    synchronized (dosRemote) {
-                    	dosRemote.writeUTF("REMOTE_DESKTOP");  
-                    	dosRemote.writeInt(imageBytes.length);
-                    	dosRemote.write(imageBytes);
-                    	dosRemote.flush();
-                    }
+                if (socketImg != null && !socketImg.isClosed()) {
+//                	dosImg.writeUTF("REMOTE_DESKTOP");  
+                	dosImg.writeInt(imageBytes.length);
+                	dosImg.write(imageBytes);
+                	dosImg.flush();
                 }
 
 
-                Thread.sleep(50);
+                Thread.sleep(10);
             
             } catch (SocketException e) {
 //                System.out.println("handleRemoteDesktop ClientHandler Socket closed: " + e.getMessage());
@@ -325,7 +313,6 @@ public class ClientHandler implements Runnable{
 	            System.out.println("err killapp");
 	            closeAllConnections();
 	        } catch (Exception e) {
-				// TODO: handle exception
 				e.printStackTrace();
 			}
 		}
@@ -334,7 +321,7 @@ public class ClientHandler implements Runnable{
     private void handleClientEvents() {
         try {
         	Robot robot = new Robot();
-//            robot.setAutoDelay(50);
+//            robot.setAutoDelay(10);
 //            robot.setAutoWaitForIdle(true);
 
             while (isRunning) {
@@ -391,7 +378,7 @@ public class ClientHandler implements Runnable{
                         case "KEY_TYPED":
                             String text = disRemote.readUTF();
                             setClipboardContents(text);
-                            robot.delay(50);
+                            robot.delay(10);
                             pasteFromClipboard(robot);
                             break;
                         case "SCREEN_SHOT":
@@ -405,7 +392,7 @@ public class ClientHandler implements Runnable{
                             closeAllConnections();
                             break;
                     }
-//                    Thread.sleep(50);
+//                    Thread.sleep(10);
                 }
             }
         } catch (SocketException e) {
@@ -419,6 +406,21 @@ public class ClientHandler implements Runnable{
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    private void setClipboardContents(String text) {
+        StringSelection selection = new StringSelection(text);
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
+    }
+
+    
+    private void pasteFromClipboard(Robot robot) {
+        robot.keyPress(KeyEvent.VK_CONTROL);
+        robot.keyPress(KeyEvent.VK_V);
+        robot.delay(10); 
+        robot.keyRelease(KeyEvent.VK_V);
+        robot.keyRelease(KeyEvent.VK_CONTROL);
+        robot.delay(10); 
     }
     
     private void handleFileTransfer() {
@@ -480,30 +482,18 @@ public class ClientHandler implements Runnable{
     			fileOut.close();
     			System.out.println("File " + fileName + " đã nhận được thành công");
     		} catch (Exception e) {
-    			// TODO: handle exception
     			e.printStackTrace();
     		}
     	}
     }
     
-    private void setClipboardContents(String text) {
-        StringSelection selection = new StringSelection(text);
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
-    }
-
-    
-    private void pasteFromClipboard(Robot robot) {
-        robot.keyPress(KeyEvent.VK_CONTROL);
-        robot.keyPress(KeyEvent.VK_V);
-        robot.delay(50); 
-        robot.keyRelease(KeyEvent.VK_V);
-        robot.keyRelease(KeyEvent.VK_CONTROL);
-        robot.delay(50); 
-    }
-    
     private void closeAllConnections() {
     	isRunning = false;
         try {
+        	if (disImg != null) disImg.close();
+            if (dosImg != null) dosImg.close();
+            if (socketImg != null && !socketImg.isClosed()) socketImg.close();
+        	
             if (disRemote != null) disRemote.close();
             if (dosRemote != null) dosRemote.close();
             if (socketRemote != null && !socketRemote.isClosed()) socketRemote.close();

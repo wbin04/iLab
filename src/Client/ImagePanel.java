@@ -8,6 +8,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -36,8 +37,9 @@ public class ImagePanel extends Canvas {
 
             this.addEventHandler(ScrollEvent.SCROLL, e -> {
                 try {
+                	int scrollAmount = (int) Math.signum(e.getDeltaY()) * -1;
                     dos.writeUTF("MOUSE_WHEEL");
-                    dos.writeInt((int) e.getDeltaY());
+                    dos.writeInt(scrollAmount);
                     dos.flush();
                 } catch (IOException ex) {
                     ex.printStackTrace();
@@ -62,7 +64,9 @@ public class ImagePanel extends Canvas {
 
     public void updateImage(BufferedImage newImg) {
         this.img = newImg;
-        drawImage();
+        Platform.runLater(() -> {
+        	drawImage();
+        });
     }
 
     private void sendMouseEvent(MouseEvent e, String eventType) {
@@ -81,11 +85,26 @@ public class ImagePanel extends Canvas {
 	                break;
 	
 	            case "MOUSE_MOVE":
-	            	dos.writeUTF(eventType);
-	                dos.writeInt((int) (e.getX() * scaleX));
-	                dos.writeInt((int) (e.getY() * scaleY));
-//	                dos.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
-	                dos.flush();
+//	            	new Thread(() -> {
+	            		try {
+//	            			double currentX = e.getX() * scaleX;
+//	            	        double currentY = e.getY() * scaleY;
+//	            	        
+//	            	        if (Math.abs(currentX - lastX) < MOVE_THRESHOLD && Math.abs(currentY - lastY) < MOVE_THRESHOLD) {
+//	                            return; 
+//	                        }
+//	                        lastX = currentX;
+//	                        lastY = currentY;
+	                        
+							dos.writeUTF(eventType);
+							dos.writeInt((int) e.getX());
+					        dos.writeInt((int) e.getY());
+//			                dos.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
+			                dos.flush();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+//	            	}).start();
 	                break;
 	                
 	            case "MOUSE_DRAGGED":
@@ -109,14 +128,15 @@ public class ImagePanel extends Canvas {
             if (eventType.equals("KEY_PRESS") || eventType.equals("KEY_RELEASE")) {
                 if (isSpecialKey(code)) {
                     dos.writeUTF(eventType);
-                    dos.writeInt(code.getCode());
+                    dos.writeInt(code.getCode()); 
                     dos.flush();
                 }
             }
+
             else if (eventType.equals("KEY_TYPED") && !character.isEmpty()) {
-                if (!isSpecialKey(code)) {
+                if (!character.equals("\b") && !character.equals("\r")) {  
                     dos.writeUTF("KEY_TYPED");
-                    dos.writeUTF(character);
+                    dos.writeUTF(character); 
                     dos.flush();
                 }
             }
@@ -127,7 +147,7 @@ public class ImagePanel extends Canvas {
 
     private boolean isSpecialKey(KeyCode code) {
         return code == KeyCode.BACK_SPACE || code == KeyCode.ENTER || code == KeyCode.TAB ||
-               code == KeyCode.CONTROL || code == KeyCode.DELETE ||
+               code == KeyCode.CONTROL || code == KeyCode.DELETE || code == KeyCode.ESCAPE ||
                code == KeyCode.UP || code == KeyCode.DOWN || 
                code == KeyCode.LEFT || code == KeyCode.RIGHT;
     }

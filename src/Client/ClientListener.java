@@ -28,6 +28,10 @@ public class ClientListener {
 	
 	private Socket socketChat;
 	
+	private Socket socketImg;
+	private DataOutputStream dosImg;
+	private DataInputStream disImg;
+	
 	private Socket socketRemote;
     private DataOutputStream dosRemote;
     private DataInputStream disRemote;
@@ -44,7 +48,7 @@ public class ClientListener {
     private DataOutputStream dosStream;
     private DataInputStream disStream;
     
-    private Socket socketBD;
+//    private Socket socketBD;
     
     private String stt;
 	private Dimension serverScreenSize;
@@ -55,9 +59,13 @@ public class ClientListener {
     private ClientTaskManager taskManager;
     private ClientBlockDomain blockDomain;
 
-	public ClientListener(Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, String stt) {
+	public ClientListener(Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, String stt) {
 		try {
 			this.socketChat = socketChat;
+			
+			this.socketImg = socketImg;
+			disImg = new DataInputStream(socketImg.getInputStream());
+			dosImg = new DataOutputStream(socketImg.getOutputStream());
 						
 			this.socketRemote = socketRemote;
 			disRemote = new DataInputStream(socketRemote.getInputStream());
@@ -75,8 +83,8 @@ public class ClientListener {
 			disStream = new DataInputStream(socketStream.getInputStream());
 			dosStream = new DataOutputStream(socketStream.getOutputStream());
 			
-			this.socketBD = socketBD;
-			DataOutputStream dos = new DataOutputStream(socketBD.getOutputStream());
+//			this.socketBD = socketBD;
+//			DataOutputStream dos = new DataOutputStream(socketBD.getOutputStream());
 			
 			this.stt = stt;
 			
@@ -85,8 +93,10 @@ public class ClientListener {
 			serverScreenSize = new Dimension(serverWidth, serverHeight);
 			
 			blockDomain = new ClientBlockDomain(socketBD);
+			Platform.runLater(() -> {
+		        taskManager = new ClientTaskManager(socketTM);
+		    });
 		} catch (Exception e) {
-			// TODO: handle exception
 		}
 		
 		initializeUI(stt);
@@ -216,7 +226,6 @@ public class ClientListener {
 			ImageIO.write(img2, "png", outputFile);
 			System.out.println("Screenshot sent");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -263,6 +272,25 @@ public class ClientListener {
         alert.showAndWait();
     }
 	
+	public void startImgRemoteListening() {
+		new Thread(() -> {
+			try {
+				while (true) {
+					int len = disImg.readInt();
+					byte tmp[] = new byte[len];
+					disImg.readFully(tmp);
+					ByteArrayInputStream bais = new ByteArrayInputStream(tmp);
+					BufferedImage img = ImageIO.read(bais);
+					
+					remotePanel.updateImage(img);
+					Thread.sleep(50);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}).start();
+	}
+	
 	public void startRemoteListening() {
 		new Thread(()->{
 			try {
@@ -302,7 +330,6 @@ public class ClientListener {
 						}			
 				}
 			} catch (Exception e) {
-				// TODO: handle exception
 				e.printStackTrace();
 			}
 		}).start();
@@ -358,7 +385,6 @@ public class ClientListener {
 						
 				}
 			} catch (Exception e) {
-				// TODO: handle exception
 				e.printStackTrace();
 			}
 		}).start();

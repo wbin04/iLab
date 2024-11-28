@@ -47,7 +47,6 @@ public class ClientChatForm implements Runnable{
 			this.dis = new DataInputStream(socket.getInputStream());
 			this.clientFormStage = clientFormStage;
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 	}
@@ -143,7 +142,6 @@ public class ClientChatForm implements Runnable{
     
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		receiveMessage();
 	}
 	

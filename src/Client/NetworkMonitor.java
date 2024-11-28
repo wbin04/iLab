@@ -20,7 +20,6 @@ public class NetworkMonitor {
     public void blockDomain(String[] ips) {
     	for (String ip : ips) {
             System.out.println(ip);
-            // Define the PowerShell command to run with elevated privileges
             String adminCmd = "cmd.exe /c powershell -Command \"Start-Process powershell -ArgumentList '-Command \"New-NetFirewallRule -DisplayName ''Block IP'' -Direction Outbound -Action Block -RemoteAddress " + ip + "\"' -Verb RunAs\"";
 
             System.out.println("Executing command: " + adminCmd);

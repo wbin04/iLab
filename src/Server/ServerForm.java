@@ -76,6 +76,7 @@ public class ServerForm extends Application {
     
     private List<Socket> listSocket = new ArrayList<>();
     private List<Socket> listSocketChat = new ArrayList<>();
+    private List<Socket> listSocketImg = new ArrayList<>();
     private List<Socket> listSocketRemote = new ArrayList<>();
     private List<Socket> listSocketFile = new ArrayList<>();
     private List<Socket> listSocketTM = new ArrayList<>();
@@ -85,11 +86,14 @@ public class ServerForm extends Application {
     private ServerSocket serverSocketInit;
     private ServerSocket serverSocket;
     private ServerSocket serverSocketChat;
+    private ServerSocket serverSocketImg;
     private ServerSocket serverSocketRemote;
     private ServerSocket serverSocketFile;
     private ServerSocket serverSocketTM;
     private ServerSocket serverSocketStream;
     private ServerSocket serverSocketBD;
+    
+    private Socket lookupSocket;
     
     private ServerForm controller;
     
@@ -184,7 +188,7 @@ public class ServerForm extends Application {
     }
     
     private void setServerCode() {
-        int serverPort = port-1;
+//        int serverPort = port-1;
         int lookupServerPort = 1024;
 
         new Thread(() -> {
@@ -200,7 +204,7 @@ public class ServerForm extends Application {
 
 
                 String lookupServerIP = InetAddress.getLocalHost().getHostAddress();  
-                Socket lookupSocket = new Socket(lookupServerIP, lookupServerPort);
+                lookupSocket = new Socket(lookupServerIP, lookupServerPort);
                 DataOutputStream dos = new DataOutputStream(lookupSocket.getOutputStream());
                 DataInputStream dis = new DataInputStream(lookupSocket.getInputStream());
 
@@ -239,11 +243,12 @@ public class ServerForm extends Application {
             try {
                 serverSocket = new ServerSocket(port);
                 serverSocketChat = new ServerSocket(port+1);
-                serverSocketRemote = new ServerSocket(port+2);
-                serverSocketFile = new ServerSocket(port+3);
-                serverSocketTM = new ServerSocket(port+4);
-                serverSocketStream = new ServerSocket(port+5);
-                serverSocketBD = new ServerSocket(port+6);
+                serverSocketImg = new ServerSocket(port+2);
+                serverSocketRemote = new ServerSocket(port+3);
+                serverSocketFile = new ServerSocket(port+4);
+                serverSocketTM = new ServerSocket(port+5);
+                serverSocketStream = new ServerSocket(port+6);
+                serverSocketBD = new ServerSocket(port+7);
 
                 Platform.runLater(() -> {
 					try {
@@ -251,7 +256,6 @@ public class ServerForm extends Application {
 						appendText("Server tại địa chỉ " + InetAddress.getLocalHost().getHostAddress() + " cổng " + port + " đang chờ kết nối...\n", false, false);
 						chatPane.setVvalue(1.0);
 					} catch (UnknownHostException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				});
@@ -283,6 +287,7 @@ public class ServerForm extends Application {
             			}
                         
                         Socket socChat = serverSocketChat.accept();
+                        Socket socImg = serverSocketImg.accept();
                         Socket socRemote = serverSocketRemote.accept();
                         Socket socFile = serverSocketFile.accept();
                         Socket socTM = serverSocketTM.accept();
@@ -291,6 +296,7 @@ public class ServerForm extends Application {
 
                         listSocket.add(soc);
                         listSocketChat.add(socChat);
+                        listSocketImg.add(socImg);
                         listSocketRemote.add(socRemote);
                         listSocketFile.add(socFile);
                         listSocketTM.add(socTM);
@@ -300,13 +306,14 @@ public class ServerForm extends Application {
 
                         final Socket finalSoc = soc;
                         final Socket finalSocChat = socChat;
+                        final Socket finalSocImg = socImg;
                         final Socket finalSocRemote = socRemote;
                         final Socket finalSocFile = socFile;
                         final Socket finalSocTM = socTM;
                         final Socket finalSocStream = socStream;
                         final Socket finalSocBD = socBD;
                         javafx.application.Platform.runLater(() -> {
-                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocRemote, finalSocFile, finalSocTM, finalSocStream, finalSocBD);
+                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocImg, finalSocRemote, finalSocFile, finalSocTM, finalSocStream, finalSocBD);
                         });
                         
 //                        dis.close();
@@ -349,7 +356,7 @@ public class ServerForm extends Application {
 		tfEmpty.setText("" + count);
     }
     
-    private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
+    private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
     	String[] parts = msg.split(",");
         int stt = Integer.parseInt(parts[0]);
         String name = parts[1];
@@ -360,7 +367,7 @@ public class ServerForm extends Application {
 		clientPanel.setName(name);
 		clientPanel.setStatus(true);
 		clientPanel.setSocketChat(socketChat);
-		clientPanel.setSocketRemote(socketRemote, socketFile, socketTM, socketStream, socketBD);
+		clientPanel.setSocketRemote(socketImg, socketRemote, socketFile, socketTM, socketStream, socketBD);
 		clientPanel.setEvents();
 		
 		tfConnected.setText("" + listSocket.size());
@@ -371,13 +378,13 @@ public class ServerForm extends Application {
         clientConnected.put(stt, true);
         
 
-		removeClientPanel(soc, socketChat, socketRemote, socketFile, socketTM, socketStream, socketBD, stt, name);
+		removeClientPanel(soc, socketChat, socketImg, socketRemote, socketFile, socketTM, socketStream, socketBD, stt, name);
     }
     
-    private void removeClientPanel(Socket soc, Socket socChat, Socket socRemote, Socket socFile, Socket socTM, Socket socStream, Socket socketDM, int stt, String name) {
+    private void removeClientPanel(Socket socket, Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, int stt, String name) {
     	new Thread(() -> {
             try {
-            	DataInputStream dis = new DataInputStream(soc.getInputStream());
+            	DataInputStream dis = new DataInputStream(socket.getInputStream());
             	while (isRunning) {
                     if (dis.available() > 0) {
 //                    	System.out.println("true");
@@ -387,21 +394,25 @@ public class ServerForm extends Application {
 
                 		
                 		appendText(name + " ở máy số " + stt + " đã ngắt kết nối", false, false);
-                    	listSocket.remove(soc);
+                    	listSocket.remove(socket);
                 		tfConnected.setText("" + listSocket.size());
                 		tfEmpty.setText("" + (10-listSocket.size()));
                     	
-                    	listSocketChat.remove(socChat);
-                    	listSocketRemote.remove(socRemote);
-                    	listSocketFile.remove(socFile);
-                    	listSocketTM.remove(socTM);
+                    	listSocketChat.remove(socketChat);
+                    	listSocketImg.remove(socketImg);
+                    	listSocketRemote.remove(socketRemote);
+                    	listSocketFile.remove(socketFile);
+                    	listSocketTM.remove(socketTM);
+                    	listSocketStream.remove(socketStream);
+                    	listSocketBD.remove(socketBD);
                     	
-                    	soc.close();
-                    	socChat.close();
-                    	socRemote.close();
-                    	socFile.close();
-                    	socTM.close();
-                    	socStream.close();
+                    	socket.close();
+                    	socketChat.close();
+                    	socketRemote.close();
+                    	socketFile.close();
+                    	socketTM.close();
+                    	socketStream.close();
+                    	socketBD.close();
                     	
                     	clientConnected.put(stt, false);
                     	ServerClientPanel clientPanel = clientFormsMap.get(stt); // tìm ra được clientPanel, cấp cho nó 1 socket, ban đầu khởi tạo bằng NULL
@@ -410,7 +421,7 @@ public class ServerForm extends Application {
 //                		clientPanel.setName("");
                 		clientPanel.setStatus(false);
                 		clientPanel.setSocketChat(null);
-                		clientPanel.setSocketRemote(null, null, null, null, null);
+                		clientPanel.setSocketRemote(null, null, null, null, null, null);
                 		clientPanel.setEvents();
                 		
                     	break;
@@ -526,6 +537,12 @@ public class ServerForm extends Application {
         try {
             isRunning = false;
             
+            
+            
+            if (lookupSocket != null && !lookupSocket.isClosed()) {
+            	lookupSocket.close();
+            }
+            
             if (serverSocketInit != null && !serverSocketInit.isClosed()) {
             	serverSocketInit.close();
             }
@@ -534,6 +551,9 @@ public class ServerForm extends Application {
             }
             if (serverSocketChat != null && !serverSocketChat.isClosed()) {
                 serverSocketChat.close();
+            }
+            if (serverSocketImg != null && !serverSocketImg.isClosed()) {
+                serverSocketImg.close();
             }
             if (serverSocketRemote != null && !serverSocketRemote.isClosed()) {
                 serverSocketRemote.close();
@@ -560,6 +580,19 @@ public class ServerForm extends Application {
                 if (socketChat != null && !socketChat.isClosed()) {
                 	try {
                         DataOutputStream dos = new DataOutputStream(socketChat.getOutputStream());
+                        dos.writeUTF("SERVER_CLOSED");
+                        dos.flush();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        System.out.println("Lỗi đóng socketChat ServerForm");
+                        appendText("Lỗi đóng socketChat ServerForm\n", false, false);
+                    }
+                }
+            }
+            for (Socket socketImg : listSocketImg) {
+                if (socketImg != null && !socketImg.isClosed()) {
+                	try {
+                        DataOutputStream dos = new DataOutputStream(socketImg.getOutputStream());
                         dos.writeUTF("SERVER_CLOSED");
                         dos.flush();
                     } catch (IOException e1) {
@@ -627,6 +660,7 @@ public class ServerForm extends Application {
             	appendText("Server đã được đóng.\n", false, false);
                 listSocket.clear();
                 listSocketChat.clear();
+                listSocketImg.clear();
                 listSocketRemote.clear();
                 listSocketTM.clear();
                 listSocketStream.clear();

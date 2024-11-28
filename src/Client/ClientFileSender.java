@@ -19,17 +19,14 @@ public class ClientFileSender implements Runnable{
 			this.socketFile = socketFile;
 			this.dosFile = new DataOutputStream(socketFile.getOutputStream());
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 	}
 	
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		try {
 			FileInputStream fileIn = new FileInputStream(file);
-//			dos.writeUTF("TRANSFER_FILE");
 			dosFile.writeUTF(file.getName());
 			dosFile.writeLong(file.length());
 			System.out.println("Đang gửi file: " + file.getName());
@@ -44,7 +41,6 @@ public class ClientFileSender implements Runnable{
 			dosChat.writeUTF("FILE:" + file.getName());
 			System.out.println("File đã được gửi thành công.");
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 	}

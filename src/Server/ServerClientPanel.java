@@ -6,20 +6,17 @@ import java.net.Socket;
 import Client.ClientListener;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
-import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class ServerClientPanel {
@@ -45,6 +42,7 @@ public class ServerClientPanel {
 	private FXMLLoader loader;
 	private ServerClientPanel controller;
     private Socket socketChat = null;
+    private Socket socketImg = null;
     private Socket socketRemote = null;
     private Socket socketFile = null;
     private Socket socketTM = null;
@@ -75,7 +73,6 @@ public class ServerClientPanel {
 	        
 	        return clientPanel;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -150,14 +147,16 @@ public class ServerClientPanel {
     	new Thread(serverChatForm).start();
 	}
 
-	public void setSocketRemote(Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
+	public void setSocketRemote(Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
+		this.socketImg = socketImg;
 		this.socketRemote = socketRemote;
 		this.socketFile = socketFile;
 		this.socketTM = socketTM;
 		this.socketStream = socketStream;
 		this.socketBD = socketBD;
 		
-		clientListener = new ClientListener(this.socketChat, this.socketRemote, this.socketFile, this.socketTM, this.socketStream, this.socketBD, this.stt);
+		clientListener = new ClientListener(this.socketChat, this.socketImg, this.socketRemote, this.socketFile, this.socketTM, this.socketStream, this.socketBD, this.stt);
+		clientListener.startImgRemoteListening();
 		clientListener.startRemoteListening();
 		clientListener.startStreamListening();
 	}
@@ -167,7 +166,6 @@ public class ServerClientPanel {
 	    	try { 
 				serverChatForm.showServerChatForm();     			
 			} catch (Exception e2) {
-				// TODO: handle exception
 				e2.printStackTrace();
 			}
 		});
@@ -175,7 +173,6 @@ public class ServerClientPanel {
 	    	try {
 				clientListener.showView();
 			} catch (Exception e2) {
-				// TODO: handle exception
 				e2.printStackTrace();
 			}
 		});
@@ -183,7 +180,6 @@ public class ServerClientPanel {
 	    	try {
 				clientListener.showFolder();
 			} catch (Exception e2) {
-				// TODO: handle exception
 				e2.printStackTrace();
 			}
 		});
