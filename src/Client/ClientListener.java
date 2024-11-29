@@ -50,6 +50,8 @@ public class ClientListener {
     
 //    private Socket socketBD;
     
+//    private Socket socketCam;
+    
     private String stt;
 	private Dimension serverScreenSize;
     private ImagePanel remotePanel;
@@ -59,7 +61,7 @@ public class ClientListener {
     private ClientTaskManager taskManager;
     private ClientBlockDomain blockDomain;
 
-	public ClientListener(Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, String stt) {
+	public ClientListener(Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, Socket socketCam, String stt) {
 		try {
 			this.socketChat = socketChat;
 			
@@ -96,6 +98,8 @@ public class ClientListener {
 			Platform.runLater(() -> {
 		        taskManager = new ClientTaskManager(socketTM);
 		    });
+			
+			
 		} catch (Exception e) {
 		}
 		
@@ -116,6 +120,7 @@ public class ClientListener {
         fileMenu.getItems().addAll(transferFileMenu, screenshotMenu);
 
         Menu toolsMenu = new Menu("Tools");
+        MenuItem cameraMenu = new MenuItem("Camera");
         MenuItem taskManagerMenu = new MenuItem("Task Manager");
         MenuItem blockDomainMenu = new MenuItem("Block Domain");
         MenuItem shutDownMenu = new MenuItem("Shut down");
@@ -164,6 +169,7 @@ public class ClientListener {
         screenshotMenu.setOnAction(event -> sendCommand("SCREEN_SHOT"));
         
 //        taskManagerMenu.setOnAction(event -> sendCommand("REQUEST_RUNNING_APPS"));
+        cameraMenu.setOnAction(event -> taskManager.show());
         taskManagerMenu.setOnAction(event -> taskManager.show());
         blockDomainMenu.setOnAction(event -> showBlockedDomain());
         shutDownMenu.setOnAction(event -> sendCommand("SHUT_DOWN"));

@@ -11,6 +11,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
@@ -48,16 +49,20 @@ public class ServerClientPanel {
     private Socket socketTM = null;
     private Socket socketStream = null;
     private Socket socketBD = null;
+    private Socket socketCam = null;
     
     private String stt;
     private String name;
     
     ServerChatForm serverChatForm;
     ClientListener clientListener;
+    ServerCamera serverCamera;
     private long startTime;
     
-//    private Stage stage = null;
     private boolean isStream = false;
+    private boolean isShowCamera;
+    
+    private Canvas cameraCanvas;
 	
 	public ServerClientPanel() {
 		loader = new FXMLLoader(getClass().getResource("ServerClientPanel.fxml"));
@@ -147,18 +152,22 @@ public class ServerClientPanel {
     	new Thread(serverChatForm).start();
 	}
 
-	public void setSocketRemote(Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
+	public void setSocketRemote(Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, Socket socketCam) {
 		this.socketImg = socketImg;
 		this.socketRemote = socketRemote;
 		this.socketFile = socketFile;
 		this.socketTM = socketTM;
 		this.socketStream = socketStream;
 		this.socketBD = socketBD;
+		this.socketCam = socketCam;
 		
-		clientListener = new ClientListener(this.socketChat, this.socketImg, this.socketRemote, this.socketFile, this.socketTM, this.socketStream, this.socketBD, this.stt);
+		clientListener = new ClientListener(this.socketChat, this.socketImg, this.socketRemote, this.socketFile, this.socketTM, this.socketStream, this.socketBD, this.socketCam, this.stt);
 		clientListener.startImgRemoteListening();
 		clientListener.startRemoteListening();
 		clientListener.startStreamListening();
+		
+		serverCamera = new ServerCamera(this.socketCam);
+		serverCamera.startCameraListening();
 	}
 	
 	public void setEvents() {
@@ -188,7 +197,13 @@ public class ServerClientPanel {
 //			controller.gridPane.setPrefHeight(324);
 			animateResize(controller.gridPane, 576, 324);
 			
-			Pane pane = new Pane(clientListener.showStream(true));
+			Pane pane;
+			if(isShowCamera) {
+				pane = new Pane(serverCamera.canvasResize(cameraCanvas, true));
+			}
+			else {
+				pane = new Pane(clientListener.showStream(true));
+			}
 		    pane.setPrefWidth(576);
 		    pane.setPrefHeight(324);
 		    controller.borderPane.setCenter(pane);
@@ -217,7 +232,19 @@ public class ServerClientPanel {
 				controller.btnView.setVisible(false);
 				controller.btnFile.setVisible(false);
 			}
+			else if(isShowCamera) {
+				controller.borderPane.setCenter(serverCamera.canvasResize(cameraCanvas, false));
+				animateResize(controller.borderPane, 300, 200);
+				controller.lbNum.setVisible(false);
+				controller.lbStatus.setVisible(false);
+				controller.lbTime.setVisible(false);
+				controller.lbName.setVisible(false);
+				controller.btnChat.setVisible(false);
+				controller.btnView.setVisible(false);
+				controller.btnFile.setVisible(false);
+			}
 			else {
+				controller.borderPane.setCenter(clientListener.showStream(false));
 				controller.borderPane.setCenter(null);
 				animateResize(controller.borderPane, 300, 200);
 				controller.lbNum.setVisible(true);
@@ -228,9 +255,42 @@ public class ServerClientPanel {
 	    });
 	}
 	
-	public void setStreamView(boolean isStream) {
-		this.isStream = isStream;
-		if(isStream) {
+	public void startCameraView() {
+		isShowCamera = true;
+	    Platform.runLater(() -> {
+	        cameraCanvas = serverCamera.showCamera();  
+	        controller.borderPane.setCenter(cameraCanvas);  
+	        controller.lbNum.setVisible(false);
+			controller.lbStatus.setVisible(false);
+			controller.lbTime.setVisible(false);
+			controller.lbName.setVisible(false);
+			controller.btnChat.setVisible(false);
+			controller.btnView.setVisible(false);
+			controller.btnFile.setVisible(false);
+	    });
+	}
+	
+	public void stopCameraView() {
+		if(isShowCamera) {
+			isShowCamera = false;
+			Platform.runLater(() -> {
+				serverCamera.stopCamera();
+				controller.borderPane.setCenter(null); 
+				controller.lbNum.setVisible(true);
+				controller.lbStatus.setVisible(true);
+				controller.lbTime.setVisible(true);
+				controller.lbName.setVisible(true);
+				controller.btnChat.setVisible(true);
+				controller.btnView.setVisible(true);
+				controller.btnFile.setVisible(true);
+		    });
+		}
+	}
+	
+	public void startStreamView() {
+		isStream = true;
+		Platform.runLater(() -> {
+//			streamCanvas = clientListener.showStream(false);
 			controller.borderPane.setCenter(clientListener.showStream(false));
 			controller.lbNum.setVisible(false);
 			controller.lbStatus.setVisible(false);
@@ -239,16 +299,22 @@ public class ServerClientPanel {
 			controller.btnChat.setVisible(false);
 			controller.btnView.setVisible(false);
 			controller.btnFile.setVisible(false);
-		}
-		else {
-			controller.borderPane.setCenter(null);
-			controller.lbNum.setVisible(true);
-			controller.lbStatus.setVisible(true);
-			controller.lbTime.setVisible(true);
-			controller.lbName.setVisible(true);
-			controller.btnChat.setVisible(true);
-			controller.btnView.setVisible(true);
-			controller.btnFile.setVisible(true);
+		});
+	}
+	
+	public void stopStreamView() {
+		if(isStream) {
+			isStream = false;
+			Platform.runLater(() -> {
+				controller.borderPane.setCenter(null);
+				controller.lbNum.setVisible(true);
+				controller.lbStatus.setVisible(true);
+				controller.lbTime.setVisible(true);
+				controller.lbName.setVisible(true);
+				controller.btnChat.setVisible(true);
+				controller.btnView.setVisible(true);
+				controller.btnFile.setVisible(true);
+			});
 		}
 	}
 	
@@ -264,5 +330,22 @@ public class ServerClientPanel {
 	    timeline.play();
 	}
 
-
+//	public Canvas canvasResize(Canvas canvas, boolean isHover) {
+//		if (isHover) {
+//	        animateCanvasResize(canvas, 576, 324);
+//	    } else {
+//	        animateCanvasResize(canvas, 300, 200);
+//	    }
+//		return canvas;
+//	}
+//	
+//	private void animateCanvasResize(Canvas canvas, double targetWidth, double targetHeight) {
+//	    Timeline timeline = new Timeline(
+//	        new KeyFrame(Duration.millis(300),
+//	            new KeyValue(canvas.widthProperty(), targetWidth),
+//	            new KeyValue(canvas.heightProperty(), targetHeight)
+//	        )
+//	    );
+//	    timeline.play();
+//	}
 }

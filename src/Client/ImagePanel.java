@@ -1,5 +1,6 @@
 package Client;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -9,7 +10,6 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.application.Platform;
-import javafx.embed.swing.SwingFXUtils;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.DataOutputStream;

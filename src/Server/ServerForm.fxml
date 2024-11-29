@@ -3,7 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.Cursor?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitPane?>
@@ -127,12 +127,7 @@
                   </ScrollPane>
                   <FlowPane id="flowPane_chat" fx:id="flowPane_chat" alignment="CENTER" columnHalignment="CENTER" hgap="20.0" prefHeight="36.0" prefWidth="Infinity" stylesheets="@ServerForm.css">
                      <children>
-                        <CheckBox fx:id="checkBox" mnemonicParsing="false" />
-                        <Button id="btnFile" fx:id="btnFile" mnemonicParsing="false" prefHeight="25.0" prefWidth="60.0" stylesheets="@ServerForm.css" text="File">
-                           <cursor>
-                              <Cursor fx:constant="HAND" />
-                           </cursor>
-                        </Button>
+                        <ComboBox fx:id="comboBox" />
                         <TextField id="chatField" fx:id="chatField" stylesheets="@ServerForm.css" />
                         <Button id="btnSend" fx:id="btnSend" alignment="CENTER" graphicTextGap="0.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="60.0" stylesheets="@ServerForm.css">
                            <cursor>

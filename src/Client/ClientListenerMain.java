@@ -14,8 +14,10 @@ public class ClientListenerMain {
 	private Socket socketTM;
 	private Socket socketStream;
 	private Socket socketBD;
+	private Socket socketCam;
     private ClientChatForm clientChatForm;
     private ClientHandler clientHandler;
+    private ClientCamera clientCamera;
 
     public ClientListenerMain(String ipAddress, int port, String name, String stt, Stage stage) {
         try {
@@ -26,12 +28,16 @@ public class ClientListenerMain {
         	socketTM = new Socket(ipAddress, port+5);
         	socketStream = new Socket(ipAddress, port+6);
         	socketBD = new Socket(ipAddress, port+7);
+        	socketCam = new Socket(ipAddress, port+8);
 			
         	clientChatForm = new ClientChatForm(socketChat, name, stage);
             new Thread(clientChatForm).start();
             
             clientHandler = new ClientHandler(socketImg, socketRemote, socketFile, socketTM, socketStream, socketBD);
 			new Thread(clientHandler).start();
+			
+			clientCamera = new ClientCamera(socketCam);
+			new Thread(clientCamera).start();
 			
 			Platform.runLater(() -> {
 				stage.hide();
