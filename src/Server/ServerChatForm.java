@@ -63,7 +63,7 @@ public class ServerChatForm implements Runnable{
 
 	        setEvents();
 	    } catch (IOException e) {
-	        e.printStackTrace();
+//	        e.printStackTrace();
 	    }
 	}
 	
@@ -95,7 +95,7 @@ public class ServerChatForm implements Runnable{
                 chatField.setText(""); 
                 appendText(message, true);
             } catch (Exception ex) {
-                ex.printStackTrace();
+//                ex.printStackTrace();
             }
         }
 	}
@@ -121,15 +121,21 @@ public class ServerChatForm implements Runnable{
 	        isRunning = false;
 	    } catch (IOException e) {
 	        if (isRunning) {
-	            e.printStackTrace();
+//	            e.printStackTrace();
 	            appendText("Lỗi khi nhận tin nhắn: " + e.getMessage(), false);
 	        }
 	    } finally {
 	        try {
+	        	Platform.runLater(() -> {
+	                if (stage != null) {
+	                    stage.hide();
+	                }
+	            });
 	            if (dis != null) dis.close();
 	            if (socket != null && !socket.isClosed()) socket.close();
 	        } catch (IOException e) {
-	            e.printStackTrace();
+//	            e.printStackTrace();
+//	        	System.out.println("loi serverChatForm stage hide");
 	        }
 	    }
 	}

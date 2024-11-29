@@ -25,7 +25,6 @@ import javafx.geometry.NodeOrientation;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -67,12 +66,6 @@ public class ServerForm extends Application {
     private ScrollPane panelPane;
     @FXML
     private FlowPane clientContainer;
-//    @FXML
-//    private Button btnFile; 
-//    @FXML
-//    private CheckBox checkBox;
-//    @FXML
-//    private CheckBox checkBox2;
     @FXML
     private ComboBox<String> comboBox;
     
@@ -437,10 +430,10 @@ public class ServerForm extends Application {
                     	
                     	clientConnected.put(stt, false);
                     	ServerClientPanel clientPanel = clientFormsMap.get(stt); // tìm ra được clientPanel, cấp cho nó 1 socket, ban đầu khởi tạo bằng NULL
-//                		clientPanel.setStartTime(-1);
+                		clientPanel.stopTime();
                 		
 //                		clientPanel.setName("");
-                		clientPanel.setStatus(false);
+//                		clientPanel.setStatus(false);
                 		clientPanel.setSocketChat(null);
                 		clientPanel.setSocketRemote(null, null, null, null, null, null, null);
                 		clientPanel.setEvents();
@@ -451,7 +444,7 @@ public class ServerForm extends Application {
                 } 
             } catch (Exception e) {
 //              e.printStackTrace();
-          	System.out.println("Client ngat ket noi");
+            	System.out.println("Client ngat ket noi");
             }
     	}).start();
     }

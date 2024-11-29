@@ -120,7 +120,6 @@ public class ClientListener {
         fileMenu.getItems().addAll(transferFileMenu, screenshotMenu);
 
         Menu toolsMenu = new Menu("Tools");
-        MenuItem cameraMenu = new MenuItem("Camera");
         MenuItem taskManagerMenu = new MenuItem("Task Manager");
         MenuItem blockDomainMenu = new MenuItem("Block Domain");
         MenuItem shutDownMenu = new MenuItem("Shut down");
@@ -169,7 +168,6 @@ public class ClientListener {
         screenshotMenu.setOnAction(event -> sendCommand("SCREEN_SHOT"));
         
 //        taskManagerMenu.setOnAction(event -> sendCommand("REQUEST_RUNNING_APPS"));
-        cameraMenu.setOnAction(event -> taskManager.show());
         taskManagerMenu.setOnAction(event -> taskManager.show());
         blockDomainMenu.setOnAction(event -> showBlockedDomain());
         shutDownMenu.setOnAction(event -> sendCommand("SHUT_DOWN"));
@@ -292,7 +290,8 @@ public class ClientListener {
 					Thread.sleep(50);
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+//				e.printStackTrace();
+				closeConnections();
 			}
 		}).start();
 	}
@@ -336,7 +335,8 @@ public class ClientListener {
 						}			
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+//				e.printStackTrace();
+				closeConnections();
 			}
 		}).start();
 	}
@@ -391,13 +391,20 @@ public class ClientListener {
 						
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+//				e.printStackTrace();
+				closeConnections();
 			}
 		}).start();
 	}
 	
 	private void closeConnections() {
 	    try {
+	    	Platform.runLater(() -> {
+                if (stage != null) {
+                    stage.hide();
+                }
+            });
+	    	
 	    	if (socketChat != null && !socketChat.isClosed()) socketChat.close();
 	    	
 	        if (disRemote != null) disRemote.close();

@@ -137,7 +137,8 @@ public class ClientHandler implements Runnable{
 	            dosBD.flush();
 				
 			} catch (Exception e) {
-				e.printStackTrace();
+//				e.printStackTrace();
+				closeAllConnections();
 			}
 		}
 	}
@@ -186,7 +187,8 @@ public class ClientHandler implements Runnable{
 	             }
 		        
 		    } catch (IOException e) {
-		        e.printStackTrace();
+//		        e.printStackTrace();
+		    	closeAllConnections();
 		    }
 //	    }
 	}
@@ -310,7 +312,7 @@ public class ClientHandler implements Runnable{
 		            System.out.println("Failed to kill app with ID " + appId + ". Exit code: " + exitCode);
 		        }
 			} catch (SocketException e) {
-	            System.out.println("err killapp");
+//	            System.out.println("err killapp");
 	            closeAllConnections();
 	        } catch (Exception e) {
 				e.printStackTrace();
@@ -482,7 +484,8 @@ public class ClientHandler implements Runnable{
     			fileOut.close();
     			System.out.println("File " + fileName + " đã nhận được thành công");
     		} catch (Exception e) {
-    			e.printStackTrace();
+//    			e.printStackTrace();
+    			closeAllConnections();
     		}
     	}
     }
@@ -509,6 +512,10 @@ public class ClientHandler implements Runnable{
             if (disStream != null) disStream.close();
             if (dosStream != null) dosStream.close();
             if (socketStream != null && !socketStream.isClosed()) socketStream.close();
+            
+            if (disBD != null) disBD.close();
+            if (dosBD != null) dosBD.close();
+//            if (socketBD != null && !socketBD.isClosed()) socketBD.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

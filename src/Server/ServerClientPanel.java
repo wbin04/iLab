@@ -58,6 +58,7 @@ public class ServerClientPanel {
     ClientListener clientListener;
     ServerCamera serverCamera;
     private long startTime;
+    private boolean isStartTime;
     
     private boolean isStream = false;
     private boolean isShowCamera;
@@ -92,17 +93,31 @@ public class ServerClientPanel {
 	
 	public void setStartTime(long startTime) {
 	    this.startTime = startTime;
-	    if(this.startTime == -1) {
-	    	controller.lbTime.setText("Thời gian sử dụng");
-	    }
-	    else {
-	    	startUsageTimer();
-	    }
+	    isStartTime = true;
+    	controller.lbTime.setText("Thời gian sử dụng");
+    	startUsageTimer();
+	}
+	
+	public void stopTime() {
+		isStartTime = false;
+		
+		Platform.runLater(() -> {
+			controller.lbStatus.setText("Đã ngắt kết nối");
+			controller.lbStatus.setStyle("-fx-text-fill: orange;");
+			
+			controller.btnChat.setVisible(false);
+			controller.btnView.setVisible(false);
+			controller.btnFile.setVisible(false);
+		});
+		
+		controller.gridPane.setOnMouseEntered(event -> {
+		    event.consume();  
+		});
 	}
 
 	private void startUsageTimer() {
 	    new Thread(() -> {
-	        while (true) {
+	        while (isStartTime) {
 	            Platform.runLater(() -> {
 	                long elapsedTime = System.currentTimeMillis() - startTime;
 	                long seconds = (elapsedTime / 1000) % 60;
@@ -329,23 +344,4 @@ public class ServerClientPanel {
 	    timeline.getKeyFrames().add(keyFrame);
 	    timeline.play();
 	}
-
-//	public Canvas canvasResize(Canvas canvas, boolean isHover) {
-//		if (isHover) {
-//	        animateCanvasResize(canvas, 576, 324);
-//	    } else {
-//	        animateCanvasResize(canvas, 300, 200);
-//	    }
-//		return canvas;
-//	}
-//	
-//	private void animateCanvasResize(Canvas canvas, double targetWidth, double targetHeight) {
-//	    Timeline timeline = new Timeline(
-//	        new KeyFrame(Duration.millis(300),
-//	            new KeyValue(canvas.widthProperty(), targetWidth),
-//	            new KeyValue(canvas.heightProperty(), targetHeight)
-//	        )
-//	    );
-//	    timeline.play();
-//	}
 }

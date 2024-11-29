@@ -122,21 +122,18 @@ public class ClientChatForm implements Runnable{
              }
          } catch (Exception e) {
         	 if (isRunning) {  
-                 e.printStackTrace();
-                 appendText("Lỗi khi nhận tin nhắn: " + e.getMessage(), false, false);
+        		 try {
+                	 Platform.runLater(() -> {
+                    	 Stage stage = (Stage) btnSend.getScene().getWindow(); 
+         	             stage.hide();
+                		 clientFormStage.show();
+                	 });
+                 } catch (Exception ex) {
+                	 System.out.println("Loi finally");
+                 }
              }
          } finally {
-             try {
-            	 Platform.runLater(() -> {
-                	 Stage stage = (Stage) btnSend.getScene().getWindow(); 
-     	             stage.hide();
-            		 clientFormStage.show();
-            	 });
-                 if (dis != null) dis.close();
-                 if (socket != null && !socket.isClosed()) socket.close();
-             } catch (IOException e) {
-                 e.printStackTrace();
-             }
+             
          }
     }
     

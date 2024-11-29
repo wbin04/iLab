@@ -100,7 +100,8 @@ public class ClientTaskManager extends Stage {
                 dosTM.flush();
                 System.out.println("Kill request sent for app ID: " + appId);
             } catch (IOException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
+            	closeConnection();
                 showError("Lỗi gửi yêu cầu đóng ứng dụng.");
             }
         } else {
@@ -130,8 +131,9 @@ public class ClientTaskManager extends Stage {
                 }
 
             } catch (IOException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
 //                Platform.runLater(() -> showError("Lỗi nhận danh sách ứng dụng."));
+            	closeConnection();
             }
         }).start();
     }
@@ -142,6 +144,17 @@ public class ClientTaskManager extends Stage {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+    
+    private void closeConnection() {
+    	try {
+    		if(disTM != null) disTM.close();
+    		if(dosTM != null) dosTM.close();
+			if(socketTM != null) socketTM.close();
+		} catch (Exception e) {
+			// TODO: handle exception
+			System.out.println("Loi closeConnection ClientTaskManager");
+		}
     }
 
     public static class AppInfo {

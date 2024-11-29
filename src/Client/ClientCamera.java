@@ -40,7 +40,8 @@ public class ClientCamera implements Runnable {
     				isRunning = false;
     			}
     		} catch (IOException e) {
-    			e.printStackTrace();
+//    			e.printStackTrace();
+    			closeConnection();
     		}
     	}
     }
@@ -76,7 +77,8 @@ public class ClientCamera implements Runnable {
                 }
 				capture.release();
             } catch (Exception e) {
-                e.printStackTrace();
+//                e.printStackTrace();
+            	closeConnection();
             }
         }).start();
     }
@@ -84,5 +86,15 @@ public class ClientCamera implements Runnable {
 	@Override
 	public void run() {
 		new Thread(this::startCameraListener).start();
+	}
+	
+	private void closeConnection() {
+		try {
+			if(dis != null) dis.close();
+			if(dos != null) dos.close();
+		} catch (Exception e) {
+			// TODO: handle exception
+			System.out.println("Loi closeConnection");
+		}
 	}
 }
