@@ -13,24 +13,32 @@ import javax.imageio.ImageIO;
 
 public class ClientHandler implements Runnable{
 	private String id;
-	private Socket socketImg;
+	private Socket socketImage;
 	private Socket socketRemote;
+	private Socket socketMouse;
+	private Socket socketKeyboard;
 	private Socket socketFile;
-	private Socket socketTM;
+	private Socket socketTaskManager;
 	private Socket socketStream;
 //	private Socket socketBD;
 	
-	private DataInputStream disImg;
-	private DataOutputStream dosImg;
+	private DataInputStream disImage;
+	private DataOutputStream dosImage;
 	
 	private DataInputStream disRemote;
 	private DataOutputStream dosRemote;
 	
+	private DataInputStream disMouse;
+	private DataOutputStream dosMouse;
+	
+	private DataInputStream disKeyboard;
+	private DataOutputStream dosKeyboard;
+	
 	private DataInputStream disFile;
 	private DataOutputStream dosFile;
 	
-	private DataInputStream disTM;
-	private DataOutputStream dosTM;
+	private DataInputStream disTaskManager;
+	private DataOutputStream dosTaskManager;
 	
 	private DataInputStream disStream;
 	private DataOutputStream dosStream;
@@ -40,11 +48,13 @@ public class ClientHandler implements Runnable{
 	
 	private boolean isRunning;
 	
-	public ClientHandler(Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD) {
-		this.socketImg = socketImg;
+	public ClientHandler(Socket socketImage, Socket socketRemote, Socket socketMouse, Socket socketKeyboard, Socket socketFile, Socket socketTaskManager, Socket socketStream, Socket socketBD) {
+		this.socketImage = socketImage;
 		this.socketRemote = socketRemote;
+		this.socketMouse = socketMouse;
+		this.socketKeyboard = socketKeyboard;
 		this.socketFile = socketFile;
-		this.socketTM = socketTM;
+		this.socketTaskManager = socketTaskManager;
 		this.socketStream = socketStream;
 //		this.socketBD = socketBD;
 		
@@ -52,17 +62,23 @@ public class ClientHandler implements Runnable{
 		this.isRunning = true;
 		
 		try {
-			this.disImg = new DataInputStream(socketImg.getInputStream());
-			this.dosImg = new DataOutputStream(socketImg.getOutputStream());
+			this.disImage = new DataInputStream(socketImage.getInputStream());
+			this.dosImage = new DataOutputStream(socketImage.getOutputStream());
 			
 			this.disRemote = new DataInputStream(socketRemote.getInputStream());
 			this.dosRemote = new DataOutputStream(socketRemote.getOutputStream());
 			
+			this.disMouse = new DataInputStream(socketMouse.getInputStream());
+			this.dosMouse = new DataOutputStream(socketMouse.getOutputStream());
+			
+			this.disKeyboard = new DataInputStream(socketKeyboard.getInputStream());
+			this.dosKeyboard = new DataOutputStream(socketKeyboard.getOutputStream());
+			
 			this.disFile = new DataInputStream(socketFile.getInputStream());
 			this.dosFile = new DataOutputStream(socketFile.getOutputStream());
 			
-			this.disTM = new DataInputStream(socketTM.getInputStream());
-			this.dosTM = new DataOutputStream(socketTM.getOutputStream());
+			this.disTaskManager = new DataInputStream(socketTaskManager.getInputStream());
+			this.dosTaskManager = new DataOutputStream(socketTaskManager.getOutputStream());
 			
 			this.disStream = new DataInputStream(socketStream.getInputStream());
 			this.dosStream = new DataOutputStream(socketStream.getOutputStream());
@@ -94,6 +110,8 @@ public class ClientHandler implements Runnable{
          }
          // Them luong chat vao day
          new Thread(this::handleClientEvents).start();
+         new Thread(this::handleMouseEvents).start();
+         new Thread(this::handleKeyboardEvents).start();
          new Thread(this::handleRemoteDesktop).start();
          new Thread(this::handleFileTransfer).start();
          new Thread(this::sendRunningApps).start();
@@ -176,12 +194,12 @@ public class ClientHandler implements Runnable{
 	             while(isRunning) {
 	            	 List<String[]> apps = getRunningApps();
 		             if(apps.size() != preSize) {
-		            	 dosTM.writeInt(apps.size());  
+		            	 dosTaskManager.writeInt(apps.size());  
 			             for (String[] app : apps) {
-			            	 dosTM.writeUTF(app[0]);  
-			            	 dosTM.writeUTF(app[1]);  
+			            	 dosTaskManager.writeUTF(app[0]);  
+			            	 dosTaskManager.writeUTF(app[1]);  
 			             }
-			             dosTM.flush();
+			             dosTaskManager.flush();
 			             preSize = apps.size();
 		             }
 	             }
@@ -275,11 +293,11 @@ public class ClientHandler implements Runnable{
                 ImageIO.write(img, "jpg", baos);
                 byte[] imageBytes = baos.toByteArray();
                 
-                if (socketImg != null && !socketImg.isClosed()) {
-//                	dosImg.writeUTF("REMOTE_DESKTOP");  
-                	dosImg.writeInt(imageBytes.length);
-                	dosImg.write(imageBytes);
-                	dosImg.flush();
+                if (socketImage != null && !socketImage.isClosed()) {
+//                	dosImage.writeUTF("REMOTE_DESKTOP");  
+                	dosImage.writeInt(imageBytes.length);
+                	dosImage.write(imageBytes);
+                	dosImage.flush();
                 }
 
 
@@ -299,7 +317,7 @@ public class ClientHandler implements Runnable{
 	private void killApp() {
 		while(isRunning) {
 			try {
-				String appId = disTM.readUTF();
+				String appId = disTaskManager.readUTF();
 		        System.out.println("Received kill request for app ID: " + appId);
 		        Process process = Runtime.getRuntime().exec("taskkill /F /PID " + appId);
 
@@ -320,21 +338,55 @@ public class ClientHandler implements Runnable{
 		}
 		
 	}
-    private void handleClientEvents() {
+	
+	private void handleClientEvents() {
         try {
         	Robot robot = new Robot();
-//            robot.setAutoDelay(10);
-//            robot.setAutoWaitForIdle(true);
 
             while (isRunning) {
                 if(disRemote.available() > 0) {
                 	String eventType = disRemote.readUTF();
                     switch (eventType) {
+                        case "SCREEN_SHOT":
+                        	sendScreenShot();
+                        	break;
+                        case "SHUT_DOWN":
+                        	commandShutDown();
+                        	break;
+                        case "SERVER_CLOSED":
+                        	isRunning = false;
+                            closeAllConnections();
+                            break;
+                    }
+//                    Thread.sleep(10);
+                }
+            }
+        } catch (SocketException e) {
+            System.out.println("SocketException");
+            isRunning = false;
+            closeAllConnections();
+        }  catch (EOFException e) {
+            System.out.println("EOFException");
+            isRunning = false;
+            closeAllConnections();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+	
+	private void handleMouseEvents() {
+        try {
+        	Robot robot = new Robot();
+
+            while (isRunning) {
+                if(disMouse.available() > 0) {
+                	String eventType = disMouse.readUTF();
+                    switch (eventType) {
                         case "MOUSE_PRESS":
                         case "MOUSE_RELEASE":
-                            int x = disRemote.readInt();
-                            int y = disRemote.readInt();
-                            int button = disRemote.readInt();
+                            int x = disMouse.readInt();
+                            int y = disMouse.readInt();
+                            int button = disMouse.readInt();
                             System.out.println("MOUSE_PRESS to: (" + x + ", " + y + ") with button " + button);
                             int mask = button == 1 ? InputEvent.BUTTON1_DOWN_MASK :
                                        button == 2 ? InputEvent.BUTTON2_DOWN_MASK :
@@ -349,27 +401,56 @@ public class ClientHandler implements Runnable{
                             break;
 
                         case "MOUSE_MOVE":
-                            x = disRemote.readInt();
-                            y = disRemote.readInt();
+                            x = disMouse.readInt();
+                            y = disMouse.readInt();
                             System.out.println("MOUSE_MOVE to: (" + x + ", " + y + ")");
                             robot.mouseMove(x, y);
                             break;
                             
                         case "MOUSE_DRAGGED":
-                            x = disRemote.readInt();
-                            y = disRemote.readInt();
+                            x = disMouse.readInt();
+                            y = disMouse.readInt();
                             System.out.println("MOUSE_DRAGGED to: (" + x + ", " + y + ")");
                             robot.mouseMove(x, y);
                             break;    
                         
                         case "MOUSE_WHEEL":
-                            int wheelAmt = disRemote.readInt();
+                            int wheelAmt = disMouse.readInt();
                             robot.mouseWheel(wheelAmt);       
-                            break;    	
+                            break;  
                             
+                        case "SERVER_CLOSED":
+                        	isRunning = false;
+                            closeAllConnections();
+                            break;
+                    }
+//                    Thread.sleep(10);
+                }
+            }
+        } catch (SocketException e) {
+            System.out.println("SocketException");
+            isRunning = false;
+            closeAllConnections();
+        }  catch (EOFException e) {
+            System.out.println("EOFException");
+            isRunning = false;
+            closeAllConnections();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+	
+    private void handleKeyboardEvents() {
+        try {
+        	Robot robot = new Robot();
+
+            while (isRunning) {
+                if(disKeyboard.available() > 0) {
+                	String eventType = disKeyboard.readUTF();
+                    switch (eventType) {  	                            
                         case "KEY_PRESS":
                         case "KEY_RELEASE":
-                            int keyCode = disRemote.readInt();
+                            int keyCode = disKeyboard.readInt();
                             if (eventType.equals("KEY_PRESS")) {
                                 robot.keyPress(keyCode);
                             } else {
@@ -378,17 +459,11 @@ public class ClientHandler implements Runnable{
                             break;
                             
                         case "KEY_TYPED":
-                            String text = disRemote.readUTF();
+                            String text = disKeyboard.readUTF();
                             setClipboardContents(text);
                             robot.delay(10);
                             pasteFromClipboard(robot);
                             break;
-                        case "SCREEN_SHOT":
-                        	sendScreenShot();
-                        	break;
-                        case "SHUT_DOWN":
-                        	commandShutDown();
-                        	break;
                         case "SERVER_CLOSED":
                         	isRunning = false;
                             closeAllConnections();
@@ -493,21 +568,29 @@ public class ClientHandler implements Runnable{
     private void closeAllConnections() {
     	isRunning = false;
         try {
-        	if (disImg != null) disImg.close();
-            if (dosImg != null) dosImg.close();
-            if (socketImg != null && !socketImg.isClosed()) socketImg.close();
+        	if (disImage != null) disImage.close();
+            if (dosImage != null) dosImage.close();
+            if (socketImage != null && !socketImage.isClosed()) socketImage.close();
         	
             if (disRemote != null) disRemote.close();
             if (dosRemote != null) dosRemote.close();
             if (socketRemote != null && !socketRemote.isClosed()) socketRemote.close();
             
+            if (disMouse != null) disMouse.close();
+            if (dosMouse != null) dosMouse.close();
+            if (socketMouse != null && !socketMouse.isClosed()) socketMouse.close();
+            
+            if (disKeyboard != null) disKeyboard.close();
+            if (dosKeyboard != null) dosKeyboard.close();
+            if (socketKeyboard != null && !socketKeyboard.isClosed()) socketKeyboard.close();
+            
             if (disFile != null) disFile.close();
             if (dosFile != null) dosFile.close();
             if (socketFile != null && !socketFile.isClosed()) socketFile.close();
             
-            if (disTM != null) disTM.close();
-            if (dosTM != null) dosTM.close();
-            if (socketTM != null && !socketTM.isClosed()) socketTM.close();
+            if (disTaskManager != null) disTaskManager.close();
+            if (dosTaskManager != null) dosTaskManager.close();
+            if (socketTaskManager != null && !socketTaskManager.isClosed()) socketTaskManager.close();
             
             if (disStream != null) disStream.close();
             if (dosStream != null) dosStream.close();

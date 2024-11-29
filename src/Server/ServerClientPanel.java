@@ -43,13 +43,15 @@ public class ServerClientPanel {
 	private FXMLLoader loader;
 	private ServerClientPanel controller;
     private Socket socketChat = null;
-    private Socket socketImg = null;
+    private Socket socketImage = null;
     private Socket socketRemote = null;
+    private Socket socketMouse = null;
+    private Socket socketKeyboard = null;
     private Socket socketFile = null;
-    private Socket socketTM = null;
+    private Socket socketTaskManager = null;
     private Socket socketStream = null;
-    private Socket socketBD = null;
-    private Socket socketCam = null;
+    private Socket socketBlockDomain = null;
+    private Socket socketCamera = null;
     
     private String stt;
     private String name;
@@ -167,21 +169,23 @@ public class ServerClientPanel {
     	new Thread(serverChatForm).start();
 	}
 
-	public void setSocketRemote(Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, Socket socketCam) {
-		this.socketImg = socketImg;
+	public void setSocketRemote(Socket socketImage, Socket socketRemote, Socket socketMouse, Socket socketKeyBoard, Socket socketFile, Socket socketTaskManager, Socket socketStream, Socket socketBlockDomain, Socket socketCamera) {
+		this.socketImage = socketImage;
 		this.socketRemote = socketRemote;
+		this.socketMouse = socketMouse;
+		this.socketKeyboard = socketKeyBoard;
 		this.socketFile = socketFile;
-		this.socketTM = socketTM;
+		this.socketTaskManager = socketTaskManager;
 		this.socketStream = socketStream;
-		this.socketBD = socketBD;
-		this.socketCam = socketCam;
+		this.socketBlockDomain = socketBlockDomain;
+		this.socketCamera = socketCamera;
 		
-		clientListener = new ClientListener(this.socketChat, this.socketImg, this.socketRemote, this.socketFile, this.socketTM, this.socketStream, this.socketBD, this.socketCam, this.stt);
+		clientListener = new ClientListener(this.socketChat, this.socketImage, this.socketRemote, this.socketMouse, this.socketKeyboard, this.socketFile, this.socketTaskManager, this.socketStream, this.socketBlockDomain, this.socketCamera, this.stt);
 		clientListener.startImgRemoteListening();
 		clientListener.startRemoteListening();
 		clientListener.startStreamListening();
 		
-		serverCamera = new ServerCamera(this.socketCam);
+		serverCamera = new ServerCamera(this.socketCamera);
 		serverCamera.startCameraListening();
 	}
 	

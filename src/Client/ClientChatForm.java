@@ -107,6 +107,14 @@ public class ClientChatForm implements Runnable{
                      if(message.equals("SERVER_CLOSED")) {
                     	 appendText("Server đã đóng!", false, false);
                          isRunning = false;
+                         try {
+                        	 Platform.runLater(() -> {
+                 	             stage.hide();
+                        		 clientFormStage.show();
+                        	 });
+                         } catch (Exception ex) {
+                        	 System.out.println("Loi finally");
+                         }
                      }
                      else if (message.startsWith("REMOTE:")) {
                          appendText("Server đang xem màn hình của bạn!", false, false);
@@ -121,17 +129,16 @@ public class ClientChatForm implements Runnable{
                  }
              }
          } catch (Exception e) {
-        	 if (isRunning) {  
+//        	 if (isRunning) {  
         		 try {
                 	 Platform.runLater(() -> {
-                    	 Stage stage = (Stage) btnSend.getScene().getWindow(); 
          	             stage.hide();
                 		 clientFormStage.show();
                 	 });
                  } catch (Exception ex) {
                 	 System.out.println("Loi finally");
                  }
-             }
+//             }
          } finally {
              
          }

@@ -29,14 +29,14 @@ public class ClientTaskManager extends Stage {
     private Button btnClose;
 
     private ObservableList<AppInfo> appList;
-    private Socket socketTM;
-    private DataInputStream disTM;
-    private DataOutputStream dosTM;
+    private Socket socket;
+    private DataInputStream dis;
+    private DataOutputStream dos;
     
     private boolean isRunning = false;
 
-    public ClientTaskManager(Socket socketTM) {
-        this.socketTM = socketTM;
+    public ClientTaskManager(Socket socketTaskManager) {
+        this.socket = socketTaskManager;
         appList = FXCollections.observableArrayList();
         isRunning = true;
 
@@ -66,8 +66,8 @@ public class ClientTaskManager extends Stage {
 
     private void initializeSockets() {
         try {
-            this.disTM = new DataInputStream(this.socketTM.getInputStream());
-            this.dosTM = new DataOutputStream(this.socketTM.getOutputStream());
+            this.dis = new DataInputStream(this.socket.getInputStream());
+            this.dos = new DataOutputStream(this.socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
             showError("Lỗi khởi tạo socket.");
@@ -96,8 +96,8 @@ public class ClientTaskManager extends Stage {
             String appId = selectedApp.getId();
             try {
 //                dosRemote.writeUTF("KILL_APP");
-                dosTM.writeUTF(appId);
-                dosTM.flush();
+                dos.writeUTF(appId);
+                dos.flush();
                 System.out.println("Kill request sent for app ID: " + appId);
             } catch (IOException e) {
 //                e.printStackTrace();
@@ -113,12 +113,12 @@ public class ClientTaskManager extends Stage {
         new Thread(() -> {
             try {
                 while(isRunning) {
-                	int appCount = disTM.readInt();
+                	int appCount = dis.readInt();
                 	
                     List<AppInfo> apps = new ArrayList<>();
                     for (int i = 0; i < appCount; i++) {
-                        String appName = disTM.readUTF();
-                        String appId = disTM.readUTF();
+                        String appName = dis.readUTF();
+                        String appId = dis.readUTF();
                         if (appName != null && !appName.isEmpty() && appId != null && !appId.isEmpty()) {
                             apps.add(new AppInfo(appName, appId));
                         }
@@ -148,9 +148,9 @@ public class ClientTaskManager extends Stage {
     
     private void closeConnection() {
     	try {
-    		if(disTM != null) disTM.close();
-    		if(dosTM != null) dosTM.close();
-			if(socketTM != null) socketTM.close();
+    		if(dis != null) dis.close();
+    		if(dos != null) dos.close();
+			if(socket != null) socket.close();
 		} catch (Exception e) {
 			// TODO: handle exception
 			System.out.println("Loi closeConnection ClientTaskManager");

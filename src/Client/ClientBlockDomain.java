@@ -35,15 +35,15 @@ public class ClientBlockDomain extends Stage{
 	
 	private ObservableList<DomainInfo> domainList;
 	
-	private Socket socketBD;
-	private DataOutputStream dosBD;
-	private DataInputStream disBD;
+	private Socket socketBlockDomain;
+	private DataOutputStream dosBlockDomain;
+	private DataInputStream disBlockDomain;
 	
-	public ClientBlockDomain(Socket socketBD) {
+	public ClientBlockDomain(Socket socketBlockDomain) {
 		try {
-			this.socketBD = socketBD;
-			this.dosBD = new DataOutputStream(this.socketBD.getOutputStream());
-			this.disBD = new DataInputStream(this.socketBD.getInputStream());
+			this.socketBlockDomain = socketBlockDomain;
+			this.dosBlockDomain = new DataOutputStream(this.socketBlockDomain.getOutputStream());
+			this.disBlockDomain = new DataInputStream(this.socketBlockDomain.getInputStream());
 			
 			initializeUI();
 			setEvents();
@@ -120,12 +120,12 @@ public class ClientBlockDomain extends Stage{
 //                    System.out.println("Failed to block IP: " + ip + " with exit code: " + exitCode);
 //                }
 
-            	this.dosBD.writeUTF("BLOCKED");
-            	this.dosBD.writeUTF(ip);
-            	this.dosBD.writeUTF(name);
-            	this.dosBD.flush();
+            	this.dosBlockDomain.writeUTF("BLOCKED");
+            	this.dosBlockDomain.writeUTF(ip);
+            	this.dosBlockDomain.writeUTF(name);
+            	this.dosBlockDomain.flush();
             	
-            	String result = disBD.readUTF();
+            	String result = disBlockDomain.readUTF();
             	if(result.equals("SUCCESSED")) {
             		System.out.println("BlockDomain thanh cong");
             	}
@@ -160,12 +160,12 @@ public class ClientBlockDomain extends Stage{
 //                    System.out.println("Failed to remove firewall rule for domain: " + name + " with exit code: " + exitCode);
 //                }
                 
-            	dosBD.writeUTF("REMOVED");
-                dosBD.writeUTF(ip);
-                dosBD.writeUTF(name);
-                dosBD.flush();
+            	dosBlockDomain.writeUTF("REMOVED");
+                dosBlockDomain.writeUTF(ip);
+                dosBlockDomain.writeUTF(name);
+                dosBlockDomain.flush();
                 
-                String result = disBD.readUTF();
+                String result = disBlockDomain.readUTF();
             	if(result.equals("SUCCESSED")) {
             		System.out.println("RemoveDomain thanh cong");
             		domainList.remove(selectedDomain);

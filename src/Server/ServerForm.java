@@ -76,24 +76,28 @@ public class ServerForm extends Application {
     
     private List<Socket> listSocket = new ArrayList<>();
     private List<Socket> listSocketChat = new ArrayList<>();
-    private List<Socket> listSocketImg = new ArrayList<>();
+    private List<Socket> listSocketImage = new ArrayList<>();
     private List<Socket> listSocketRemote = new ArrayList<>();
+    private List<Socket> listSocketMouse = new ArrayList<>();
+    private List<Socket> listSocketKeyboard = new ArrayList<>();
     private List<Socket> listSocketFile = new ArrayList<>();
-    private List<Socket> listSocketTM = new ArrayList<>();
+    private List<Socket> listSocketTaskManager = new ArrayList<>();
     private List<Socket> listSocketStream = new ArrayList<>();
-    private List<Socket> listSocketBD = new ArrayList<>();
-    private List<Socket> listSocketCam = new ArrayList<>();
+    private List<Socket> listSocketBlockDomain = new ArrayList<>();
+    private List<Socket> listSocketCamera = new ArrayList<>();
     
     private ServerSocket serverSocketInit;
     private ServerSocket serverSocket;
     private ServerSocket serverSocketChat;
-    private ServerSocket serverSocketImg;
+    private ServerSocket serverSocketImage;
     private ServerSocket serverSocketRemote;
+    private ServerSocket serverSocketMouse;
+    private ServerSocket serverSocketKeyboard;
     private ServerSocket serverSocketFile;
-    private ServerSocket serverSocketTM;
+    private ServerSocket serverSocketTaskManager;
     private ServerSocket serverSocketStream;
-    private ServerSocket serverSocketBD;
-    private ServerSocket serverSocketCam;
+    private ServerSocket serverSocketBlockDomain;
+    private ServerSocket serverSocketCamera;
     
     private Socket lookupSocket;
     
@@ -253,13 +257,15 @@ public class ServerForm extends Application {
             try {
                 serverSocket = new ServerSocket(port);
                 serverSocketChat = new ServerSocket(port+1);
-                serverSocketImg = new ServerSocket(port+2);
+                serverSocketImage = new ServerSocket(port+2);
                 serverSocketRemote = new ServerSocket(port+3);
-                serverSocketFile = new ServerSocket(port+4);
-                serverSocketTM = new ServerSocket(port+5);
-                serverSocketStream = new ServerSocket(port+6);
-                serverSocketBD = new ServerSocket(port+7);
-                serverSocketCam = new ServerSocket(port+8);
+                serverSocketMouse = new ServerSocket(port+4);
+                serverSocketKeyboard = new ServerSocket(port+5);
+                serverSocketFile = new ServerSocket(port+6);
+                serverSocketTaskManager = new ServerSocket(port+7);
+                serverSocketStream = new ServerSocket(port+8);
+                serverSocketBlockDomain = new ServerSocket(port+9);
+                serverSocketCamera = new ServerSocket(port+10);
 
                 Platform.runLater(() -> {
 					try {
@@ -298,36 +304,42 @@ public class ServerForm extends Application {
             			}
                         
                         Socket socChat = serverSocketChat.accept();
-                        Socket socImg = serverSocketImg.accept();
+                        Socket socImg = serverSocketImage.accept();
                         Socket socRemote = serverSocketRemote.accept();
+                        Socket socMouse = serverSocketMouse.accept();
+                        Socket socKeyboard = serverSocketKeyboard.accept();
                         Socket socFile = serverSocketFile.accept();
-                        Socket socTM = serverSocketTM.accept();
+                        Socket socTM = serverSocketTaskManager.accept();
                         Socket socStream = serverSocketStream.accept();
-                        Socket socBD = serverSocketBD.accept();
-                        Socket socCam = serverSocketCam.accept();
+                        Socket socBD = serverSocketBlockDomain.accept();
+                        Socket socCam = serverSocketCamera.accept();
 
                         listSocket.add(soc);
                         listSocketChat.add(socChat);
-                        listSocketImg.add(socImg);
+                        listSocketImage.add(socImg);
                         listSocketRemote.add(socRemote);
+                        listSocketMouse.add(socMouse);
+                        listSocketKeyboard.add(socKeyboard);
                         listSocketFile.add(socFile);
-                        listSocketTM.add(socTM);
+                        listSocketTaskManager.add(socTM);
                         listSocketStream.add(socStream);
-                        listSocketBD.add(socBD);
-                        listSocketCam.add(socCam);
+                        listSocketBlockDomain.add(socBD);
+                        listSocketCamera.add(socCam);
             			
 
                         final Socket finalSoc = soc;
                         final Socket finalSocChat = socChat;
                         final Socket finalSocImg = socImg;
                         final Socket finalSocRemote = socRemote;
+                        final Socket finalSocMouse = socMouse;
+                        final Socket finalSocKeyboard = socKeyboard;
                         final Socket finalSocFile = socFile;
                         final Socket finalSocTM = socTM;
                         final Socket finalSocStream = socStream;
                         final Socket finalSocBD = socBD;
                         final Socket finalSocCam = socCam;
                         javafx.application.Platform.runLater(() -> {
-                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocImg, finalSocRemote, finalSocFile, finalSocTM, finalSocStream, finalSocBD, finalSocCam);
+                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocImg, finalSocRemote, finalSocMouse, finalSocKeyboard, finalSocFile, finalSocTM, finalSocStream, finalSocBD, finalSocCam);
                         });
                         
 //                        dis.close();
@@ -370,7 +382,7 @@ public class ServerForm extends Application {
 		tfEmpty.setText("" + count);
     }
     
-    private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, Socket socketCam) {
+    private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketMouse, Socket socketKeyboard, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, Socket socketCam) {
     	String[] parts = msg.split(",");
         int stt = Integer.parseInt(parts[0]);
         String name = parts[1];
@@ -381,7 +393,7 @@ public class ServerForm extends Application {
 		clientPanel.setName(name);
 		clientPanel.setStatus(true);
 		clientPanel.setSocketChat(socketChat);
-		clientPanel.setSocketRemote(socketImg, socketRemote, socketFile, socketTM, socketStream, socketBD, socketCam);
+		clientPanel.setSocketRemote(socketImg, socketRemote, socketMouse, socketKeyboard, socketFile, socketTM, socketStream, socketBD, socketCam);
 		clientPanel.setEvents();
 		
 		tfConnected.setText("" + listSocket.size());
@@ -392,10 +404,10 @@ public class ServerForm extends Application {
         clientConnected.put(stt, true);
         
 
-		removeClientPanel(soc, socketChat, socketImg, socketRemote, socketFile, socketTM, socketStream, socketBD, socketCam, stt, name);
+		removeClientPanel(soc, socketChat, socketImg, socketRemote, socketMouse, socketKeyboard, socketFile, socketTM, socketStream, socketBD, socketCam, stt, name);
     }
     
-    private void removeClientPanel(Socket socket, Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, Socket socketCam, int stt, String name) {
+    private void removeClientPanel(Socket socket, Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketMouse, Socket socketKeyBoard, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, Socket socketCam, int stt, String name) {
     	new Thread(() -> {
             try {
             	DataInputStream dis = new DataInputStream(socket.getInputStream());
@@ -413,12 +425,12 @@ public class ServerForm extends Application {
                 		tfEmpty.setText("" + (10-listSocket.size()));
                     	
                     	listSocketChat.remove(socketChat);
-                    	listSocketImg.remove(socketImg);
+                    	listSocketImage.remove(socketImg);
                     	listSocketRemote.remove(socketRemote);
                     	listSocketFile.remove(socketFile);
-                    	listSocketTM.remove(socketTM);
+                    	listSocketTaskManager.remove(socketTM);
                     	listSocketStream.remove(socketStream);
-                    	listSocketBD.remove(socketBD);
+                    	listSocketBlockDomain.remove(socketBD);
                     	
                     	socket.close();
                     	socketChat.close();
@@ -435,7 +447,7 @@ public class ServerForm extends Application {
 //                		clientPanel.setName("");
 //                		clientPanel.setStatus(false);
                 		clientPanel.setSocketChat(null);
-                		clientPanel.setSocketRemote(null, null, null, null, null, null, null);
+                		clientPanel.setSocketRemote(null, null, null, null, null, null, null, null, null);
                 		clientPanel.setEvents();
                 		
                     	break;
@@ -564,26 +576,32 @@ public class ServerForm extends Application {
             if (serverSocketChat != null && !serverSocketChat.isClosed()) {
                 serverSocketChat.close();
             }
-            if (serverSocketImg != null && !serverSocketImg.isClosed()) {
-                serverSocketImg.close();
+            if (serverSocketImage != null && !serverSocketImage.isClosed()) {
+                serverSocketImage.close();
             }
             if (serverSocketRemote != null && !serverSocketRemote.isClosed()) {
                 serverSocketRemote.close();
             }
+            if (serverSocketMouse != null && !serverSocketMouse.isClosed()) {
+            	serverSocketMouse.close();
+            }
+            if (serverSocketKeyboard != null && !serverSocketKeyboard.isClosed()) {
+            	serverSocketKeyboard.close();
+            }
             if (serverSocketFile != null && !serverSocketFile.isClosed()) {
             	serverSocketFile.close();
             }
-            if (serverSocketTM != null && !serverSocketTM.isClosed()) {
-            	serverSocketTM.close();
+            if (serverSocketTaskManager != null && !serverSocketTaskManager.isClosed()) {
+            	serverSocketTaskManager.close();
             }
             if (serverSocketStream != null && !serverSocketStream.isClosed()) {
             	serverSocketStream.close();
             }
-            if (serverSocketBD != null && !serverSocketBD.isClosed()) {
-            	serverSocketBD.close();
+            if (serverSocketBlockDomain != null && !serverSocketBlockDomain.isClosed()) {
+            	serverSocketBlockDomain.close();
             }
-            if (serverSocketCam != null && !serverSocketCam.isClosed()) {
-            	serverSocketCam.close();
+            if (serverSocketCamera != null && !serverSocketCamera.isClosed()) {
+            	serverSocketCamera.close();
             }
 
             for (Socket socket : listSocket) {
@@ -604,7 +622,7 @@ public class ServerForm extends Application {
                     }
                 }
             }
-            for (Socket socketImg : listSocketImg) {
+            for (Socket socketImg : listSocketImage) {
                 if (socketImg != null && !socketImg.isClosed()) {
                 	try {
                         DataOutputStream dos = new DataOutputStream(socketImg.getOutputStream());
@@ -630,6 +648,32 @@ public class ServerForm extends Application {
                     }
                 }
             }
+            for (Socket socketMouse : listSocketMouse) {
+                if (socketMouse != null && !socketMouse.isClosed()) {
+                	try {
+                        DataOutputStream dos = new DataOutputStream(socketMouse.getOutputStream());
+                        dos.writeUTF("SERVER_CLOSED");
+                        dos.flush();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        System.out.println("Lỗi đóng socketRemote ServerForm");
+                        appendText("Lỗi đóng socketRemote ServerForm\n", false, false);
+                    }
+                }
+            }
+            for (Socket socketKeyboard : listSocketKeyboard) {
+                if (socketKeyboard != null && !socketKeyboard.isClosed()) {
+                	try {
+                        DataOutputStream dos = new DataOutputStream(socketKeyboard.getOutputStream());
+                        dos.writeUTF("SERVER_CLOSED");
+                        dos.flush();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        System.out.println("Lỗi đóng socketRemote ServerForm");
+                        appendText("Lỗi đóng socketRemote ServerForm\n", false, false);
+                    }
+                }
+            }
             for (Socket socketFile : listSocketFile) {
                 if (socketFile != null && !socketFile.isClosed()) {
                 	try {
@@ -643,7 +687,7 @@ public class ServerForm extends Application {
                     }
                 }
             }
-            for (Socket socketTM : listSocketTM) {
+            for (Socket socketTM : listSocketTaskManager) {
                 if (socketTM != null && !socketTM.isClosed()) {
                 	try {
                         DataOutputStream dos = new DataOutputStream(socketTM.getOutputStream());
@@ -670,7 +714,20 @@ public class ServerForm extends Application {
                     }
                 }
             }
-            for (Socket socketCam : listSocketCam) {
+            for (Socket socketBlockDomain : listSocketBlockDomain) {
+                if (socketBlockDomain != null && !socketBlockDomain.isClosed()) {
+                	try {
+                        DataOutputStream dos = new DataOutputStream(socketBlockDomain.getOutputStream());
+                        dos.writeUTF("SERVER_CLOSED");
+                        dos.flush();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        System.out.println("Lỗi đóng socketRemote ServerForm");
+                        appendText("Lỗi đóng socketFile ServerForm\n", false, false);
+                    }
+                }
+            }
+            for (Socket socketCam : listSocketCamera) {
                 if (socketCam != null && !socketCam.isClosed()) {
                 	try {
                         DataOutputStream dos = new DataOutputStream(socketCam.getOutputStream());
@@ -688,11 +745,14 @@ public class ServerForm extends Application {
             	appendText("Server đã được đóng.\n", false, false);
                 listSocket.clear();
                 listSocketChat.clear();
-                listSocketImg.clear();
+                listSocketImage.clear();
                 listSocketRemote.clear();
-                listSocketTM.clear();
+                listSocketMouse.clear();
+                listSocketKeyboard.clear();
+                listSocketTaskManager.clear();
                 listSocketStream.clear();
-                listSocketCam.clear();
+                listSocketBlockDomain.clear();
+                listSocketCamera.clear();
                 tfConnected.setText("0");
                 tfEmpty.setText("0");
                 clientContainer.getChildren().clear();

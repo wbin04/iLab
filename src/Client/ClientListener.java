@@ -28,21 +28,24 @@ public class ClientListener {
 	
 	private Socket socketChat;
 	
-	private Socket socketImg;
-	private DataOutputStream dosImg;
-	private DataInputStream disImg;
+	private Socket socketImage;
+	private DataOutputStream dosImage;
+	private DataInputStream disImage;
 	
 	private Socket socketRemote;
     private DataOutputStream dosRemote;
     private DataInputStream disRemote;
     
+    private Socket socketMouse;
+    private Socket socketKeyboard;
+    
     private Socket socketFile;
     private DataOutputStream dosFile;
     private DataInputStream disFile;
     
-    private Socket socketTM;
-    private DataOutputStream dosTM;
-    private DataInputStream disTM;
+    private Socket socketTaskManager;
+    private DataOutputStream dosTaskManager;
+    private DataInputStream disTaskManager;
     
     private Socket socketStream;
     private DataOutputStream dosStream;
@@ -61,25 +64,28 @@ public class ClientListener {
     private ClientTaskManager taskManager;
     private ClientBlockDomain blockDomain;
 
-	public ClientListener(Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, Socket socketCam, String stt) {
+	public ClientListener(Socket socketChat, Socket socketImage, Socket socketRemote, Socket socketMouse, Socket socketKeyBoard, Socket socketFile, Socket socketTaskManager, Socket socketStream, Socket socketBD, Socket socketCam, String stt) {
 		try {
 			this.socketChat = socketChat;
 			
-			this.socketImg = socketImg;
-			disImg = new DataInputStream(socketImg.getInputStream());
-			dosImg = new DataOutputStream(socketImg.getOutputStream());
+			this.socketImage = socketImage;
+			disImage = new DataInputStream(socketImage.getInputStream());
+			dosImage = new DataOutputStream(socketImage.getOutputStream());
 						
 			this.socketRemote = socketRemote;
 			disRemote = new DataInputStream(socketRemote.getInputStream());
 			dosRemote = new DataOutputStream(socketRemote.getOutputStream());
 			
+			this.socketMouse = socketMouse;
+			this.socketKeyboard = socketKeyBoard;
+			
 			this.socketFile = socketFile;
 			disFile = new DataInputStream(socketFile.getInputStream());
 			dosFile = new DataOutputStream(socketFile.getOutputStream());
 			
-			this.socketTM = socketTM;
-			disTM = new DataInputStream(socketTM.getInputStream());
-			dosTM = new DataOutputStream(socketTM.getOutputStream());
+			this.socketTaskManager = socketTaskManager;
+			disTaskManager = new DataInputStream(socketTaskManager.getInputStream());
+			dosTaskManager = new DataOutputStream(socketTaskManager.getOutputStream());
 			
 			this.socketStream = socketStream;
 			disStream = new DataInputStream(socketStream.getInputStream());
@@ -96,7 +102,7 @@ public class ClientListener {
 			
 			blockDomain = new ClientBlockDomain(socketBD);
 			Platform.runLater(() -> {
-		        taskManager = new ClientTaskManager(socketTM);
+		        taskManager = new ClientTaskManager(socketTaskManager);
 		    });
 			
 			
@@ -127,8 +133,8 @@ public class ClientListener {
 
         menuBar.getMenus().addAll(fileMenu, toolsMenu);
 
-        remotePanel = new ImagePanel(socketRemote, serverScreenSize, true);
-        streamPanel = new ImagePanel(socketStream, serverScreenSize, false);
+        remotePanel = new ImagePanel(socketMouse, socketKeyboard, serverScreenSize, true);
+        streamPanel = new ImagePanel(socketStream, socketKeyboard, serverScreenSize, false);
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int screenWidth = (int) screenSize.getWidth();
         int screenHeight = (int) screenSize.getHeight();
@@ -238,56 +244,18 @@ public class ClientListener {
 		blockDomain.show();
 	}
 	
-	public void showDomainInputDialog() {
-		TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Nhập tên miền");
-        dialog.setHeaderText("Vui lòng nhập tên miền");
-        dialog.setContentText("Tên miền:");
-
-        Optional<String> result = dialog.showAndWait();
-
-        if (result.isPresent()) { 
-            String domain = result.get().trim(); 
-            if (!domain.isEmpty()) { 
-                System.out.println("Tên miền đã nhập: " + domain);
-                NetworkMonitor networkMonitor = new NetworkMonitor();
-                String[] ips = networkMonitor.getIP(domain);
-                networkMonitor.blockDomain(ips);
-                showDialog("Đã chặn tên miền: " + domain, true);
-            } else {
-                showDialog("Tên miền không được để trống!", false);
-            }
-        } else {
-            System.out.println("Đã huỷ blockDomain");
-        }
-	}
-	
-	private void showDialog(String message, boolean type) {
-        Alert alert;
-        if(type) {
-        	alert = new Alert(Alert.AlertType.INFORMATION);
-        }
-        else {
-        	 alert = new Alert(Alert.AlertType.ERROR);
-        }
-        alert.setTitle("Lỗi");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-	
 	public void startImgRemoteListening() {
 		new Thread(() -> {
 			try {
 				while (true) {
-					int len = disImg.readInt();
+					int len = disImage.readInt();
 					byte tmp[] = new byte[len];
-					disImg.readFully(tmp);
+					disImage.readFully(tmp);
 					ByteArrayInputStream bais = new ByteArrayInputStream(tmp);
 					BufferedImage img = ImageIO.read(bais);
 					
 					remotePanel.updateImage(img);
-					Thread.sleep(50);
+					Thread.sleep(10);
 				}
 			} catch (Exception e) {
 //				e.printStackTrace();
@@ -318,11 +286,11 @@ public class ClientListener {
 							BufferedImage img = ImageIO.read(bais);
 							
 							remotePanel.updateImage(img);
-							Thread.sleep(50);
+							Thread.sleep(10);
 							break;
 						case "TASK_MANAGER":
 							Platform.runLater(() -> {
-						        taskManager = new ClientTaskManager(socketTM);
+						        taskManager = new ClientTaskManager(socketTaskManager);
 						    });
 							break;
 						case "SCREENSHOT":
@@ -381,7 +349,7 @@ public class ClientListener {
 							streamPanel.updateImage(img2);
 					    });
 						
-						Thread.sleep(50);
+						Thread.sleep(10);
 	                } catch (EOFException e) {
 	                    System.out.println("Server đã đóng kết nối (EOF).");
 	                    closeConnections();
@@ -415,9 +383,9 @@ public class ClientListener {
 	        if (dosFile != null) dosFile.close();
 	        if (socketFile != null && !socketFile.isClosed()) socketFile.close();
 	        
-	        if (disTM != null) disTM.close();
-	        if (dosTM != null) dosTM.close();
-	        if (socketTM != null && !socketTM.isClosed()) socketTM.close();
+	        if (disTaskManager != null) disTaskManager.close();
+	        if (dosTaskManager != null) dosTaskManager.close();
+	        if (socketTaskManager != null && !socketTaskManager.isClosed()) socketTaskManager.close();
 	        
 	        if (disStream != null) disStream.close();
 	        if (dosStream != null) dosStream.close();

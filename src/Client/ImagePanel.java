@@ -18,13 +18,15 @@ import java.net.Socket;
 
 public class ImagePanel extends Canvas {
     private BufferedImage img;
-    private DataOutputStream dos;
+    private DataOutputStream dosMouse;
+    private DataOutputStream dosKeyboard;
     private Dimension serverScreenSize;
 
-    public ImagePanel(Socket socket, Dimension serverScreenSize, boolean isRemote) {
+    public ImagePanel(Socket socketMouse, Socket socketKeyboard, Dimension serverScreenSize, boolean isRemote) {
         this.serverScreenSize = serverScreenSize;
         try {
-            this.dos = new DataOutputStream(socket.getOutputStream());
+            this.dosMouse = new DataOutputStream(socketMouse.getOutputStream());
+            this.dosKeyboard = new DataOutputStream(socketKeyboard.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -38,9 +40,9 @@ public class ImagePanel extends Canvas {
             this.addEventHandler(ScrollEvent.SCROLL, e -> {
                 try {
                 	int scrollAmount = (int) Math.signum(e.getDeltaY()) * -1;
-                    dos.writeUTF("MOUSE_WHEEL");
-                    dos.writeInt(scrollAmount);
-                    dos.flush();
+                    dosMouse.writeUTF("MOUSE_WHEEL");
+                    dosMouse.writeInt(scrollAmount);
+                    dosMouse.flush();
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
@@ -77,11 +79,11 @@ public class ImagePanel extends Canvas {
             switch (eventType) {
 	            case "MOUSE_PRESS":
 	            case "MOUSE_RELEASE":
-	            	dos.writeUTF(eventType);
-	                dos.writeInt((int) (e.getX() * scaleX));
-	                dos.writeInt((int) (e.getY() * scaleY));
-	                dos.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
-	                dos.flush();
+	            	dosMouse.writeUTF(eventType);
+	                dosMouse.writeInt((int) (e.getX() * scaleX));
+	                dosMouse.writeInt((int) (e.getY() * scaleY));
+	                dosMouse.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
+	                dosMouse.flush();
 	                break;
 	
 	            case "MOUSE_MOVE":
@@ -96,11 +98,11 @@ public class ImagePanel extends Canvas {
 //	                        lastX = currentX;
 //	                        lastY = currentY;
 	                        
-							dos.writeUTF(eventType);
-							dos.writeInt((int) e.getX());
-					        dos.writeInt((int) e.getY());
+							dosMouse.writeUTF(eventType);
+							dosMouse.writeInt((int) e.getX());
+					        dosMouse.writeInt((int) e.getY());
 //			                dos.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
-			                dos.flush();
+			                dosMouse.flush();
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
@@ -108,11 +110,11 @@ public class ImagePanel extends Canvas {
 	                break;
 	                
 	            case "MOUSE_DRAGGED":
-	            	dos.writeUTF(eventType);
-	                dos.writeInt((int) (e.getX() * scaleX));
-	                dos.writeInt((int) (e.getY() * scaleY));
+	            	dosMouse.writeUTF(eventType);
+	                dosMouse.writeInt((int) (e.getX() * scaleX));
+	                dosMouse.writeInt((int) (e.getY() * scaleY));
 //	                dos.writeInt(e.getButton() == MouseButton.PRIMARY ? 1 : (e.getButton() == MouseButton.SECONDARY ? 3 : 2));
-	                dos.flush();
+	                dosMouse.flush();
 	                break;     
 	        }
         } catch (Exception ex) {
@@ -127,17 +129,17 @@ public class ImagePanel extends Canvas {
             
             if (eventType.equals("KEY_PRESS") || eventType.equals("KEY_RELEASE")) {
                 if (isSpecialKey(code)) {
-                    dos.writeUTF(eventType);
-                    dos.writeInt(code.getCode()); 
-                    dos.flush();
+                    dosKeyboard.writeUTF(eventType);
+                    dosKeyboard.writeInt(code.getCode()); 
+                    dosKeyboard.flush();
                 }
             }
 
             else if (eventType.equals("KEY_TYPED") && !character.isEmpty()) {
                 if (!character.equals("\b") && !character.equals("\r")) {  
-                    dos.writeUTF("KEY_TYPED");
-                    dos.writeUTF(character); 
-                    dos.flush();
+                    dosKeyboard.writeUTF("KEY_TYPED");
+                    dosKeyboard.writeUTF(character); 
+                    dosKeyboard.flush();
                 }
             }
         } catch (IOException ex) {

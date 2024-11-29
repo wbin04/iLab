@@ -10,8 +10,10 @@ public class ClientListenerMain {
 	private Socket socketChat;
 	private Socket socketImg;
 	private Socket socketRemote;
+	private Socket socketMouse;
+	private Socket socketKeyboard;
 	private Socket socketFile;
-	private Socket socketTM;
+	private Socket socketTaskManager;
 	private Socket socketStream;
 	private Socket socketBD;
 	private Socket socketCam;
@@ -24,16 +26,18 @@ public class ClientListenerMain {
         	socketChat = new Socket(ipAddress, port+1);
         	socketImg = new Socket(ipAddress, port+2);
         	socketRemote = new Socket(ipAddress, port+3);
-        	socketFile = new Socket(ipAddress, port+4);
-        	socketTM = new Socket(ipAddress, port+5);
-        	socketStream = new Socket(ipAddress, port+6);
-        	socketBD = new Socket(ipAddress, port+7);
-        	socketCam = new Socket(ipAddress, port+8);
+        	socketMouse = new Socket(ipAddress, port+4);
+        	socketKeyboard = new Socket(ipAddress, port+5);
+        	socketFile = new Socket(ipAddress, port+6);
+        	socketTaskManager = new Socket(ipAddress, port+7);
+        	socketStream = new Socket(ipAddress, port+8);
+        	socketBD = new Socket(ipAddress, port+9);
+        	socketCam = new Socket(ipAddress, port+10);
 			
         	clientChatForm = new ClientChatForm(socketChat, name, stage);
             new Thread(clientChatForm).start();
             
-            clientHandler = new ClientHandler(socketImg, socketRemote, socketFile, socketTM, socketStream, socketBD);
+            clientHandler = new ClientHandler(socketImg, socketRemote, socketMouse, socketKeyboard, socketFile, socketTaskManager, socketStream, socketBD);
 			new Thread(clientHandler).start();
 			
 			clientCamera = new ClientCamera(socketCam);
