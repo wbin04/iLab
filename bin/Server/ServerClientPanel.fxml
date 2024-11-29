@@ -51,9 +51,9 @@
             </FlowPane>
             <FlowPane alignment="TOP_CENTER" hgap="20.0" GridPane.rowIndex="3">
                <children>
-                  <Button id="btnChat_panel" fx:id="btnChat" mnemonicParsing="false" prefWidth="60.0" styleClass="btn" stylesheets="@ServerClientPanel.css" text="Chat" />
-                  <Button id="btnView_panel" fx:id="btnView" mnemonicParsing="false" prefWidth="60.0" styleClass="btn" stylesheets="@ServerClientPanel.css" text="View" />
-                  <Button id="btnFile_panel" fx:id="btnFile" mnemonicParsing="false" prefWidth="60.0" styleClass="btn" stylesheets="@ServerClientPanel.css" text="File" />
+                  <Button id="btnChat_panel" fx:id="btnChat" mnemonicParsing="false" styleClass="btn" stylesheets="@ServerClientPanel.css" text="Nhắn tin" />
+                  <Button id="btnView_panel" fx:id="btnView" mnemonicParsing="false" styleClass="btn" stylesheets="@ServerClientPanel.css" text="Xem màn hình" />
+                  <Button id="btnFile_panel" fx:id="btnFile" mnemonicParsing="false" styleClass="btn" stylesheets="@ServerClientPanel.css" text="Truyền file" />
                </children>
             </FlowPane>
          </children>

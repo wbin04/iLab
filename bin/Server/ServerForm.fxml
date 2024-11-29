@@ -129,7 +129,7 @@
                      <children>
                         <ComboBox fx:id="comboBox" />
                         <TextField id="chatField" fx:id="chatField" stylesheets="@ServerForm.css" />
-                        <Button id="btnSend" fx:id="btnSend" alignment="CENTER" graphicTextGap="0.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="60.0" stylesheets="@ServerForm.css">
+                        <Button id="btnSend" fx:id="btnSend" alignment="CENTER" graphicTextGap="0.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="60.0" stylesheets="@ServerForm.css" text="Gửi">
                            <cursor>
                               <Cursor fx:constant="HAND" />
                            </cursor>

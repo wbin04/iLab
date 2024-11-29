@@ -146,9 +146,9 @@ public class ServerClientPanel {
 	}
 	
 	public void setStatus(boolean status) {
-		controller.btnChat.setVisible(status);
-		controller.btnView.setVisible(status);
-		controller.btnFile.setVisible(status);
+		controller.btnChat.setVisible(false);
+		controller.btnView.setVisible(false);
+		controller.btnFile.setVisible(false);
 		if(status) {
 			controller.lbStatus.setText("Đã kết nối");
 			controller.lbStatus.setStyle("-fx-text-fill: green;");
@@ -266,6 +266,9 @@ public class ServerClientPanel {
 				controller.lbStatus.setVisible(true);
 				controller.lbTime.setVisible(true);
 				controller.lbName.setVisible(true);
+				controller.btnChat.setVisible(false);
+				controller.btnView.setVisible(false);
+				controller.btnFile.setVisible(false);
 			}
 	    });
 	}
@@ -295,9 +298,9 @@ public class ServerClientPanel {
 				controller.lbStatus.setVisible(true);
 				controller.lbTime.setVisible(true);
 				controller.lbName.setVisible(true);
-				controller.btnChat.setVisible(true);
-				controller.btnView.setVisible(true);
-				controller.btnFile.setVisible(true);
+				controller.btnChat.setVisible(false);
+				controller.btnView.setVisible(false);
+				controller.btnFile.setVisible(false);
 		    });
 		}
 	}
@@ -326,9 +329,9 @@ public class ServerClientPanel {
 				controller.lbStatus.setVisible(true);
 				controller.lbTime.setVisible(true);
 				controller.lbName.setVisible(true);
-				controller.btnChat.setVisible(true);
-				controller.btnView.setVisible(true);
-				controller.btnFile.setVisible(true);
+				controller.btnChat.setVisible(false);
+				controller.btnView.setVisible(false);
+				controller.btnFile.setVisible(false);
 			});
 		}
 	}

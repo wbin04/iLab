@@ -40,7 +40,7 @@
             <FlowPane alignment="CENTER" hgap="40.0" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.rowIndex="2">
                <children>
                   <Label contentDisplay="CENTER" prefHeight="20.0" prefWidth="100.0" stylesheets="@ClientForm.css" text="Nhập tên:" textAlignment="CENTER" />
-                  <TextField fx:id="tfName" alignment="CENTER" disable="true" prefHeight="25.0" prefWidth="250.0" stylesheets="@ClientForm.css" text="aaa" />
+                  <TextField fx:id="tfName" alignment="CENTER" disable="true" prefHeight="25.0" prefWidth="250.0" stylesheets="@ClientForm.css" text="Đình Hải" />
                </children>
             </FlowPane>
             <FlowPane alignment="CENTER" hgap="50.0" prefHeight="200.0" prefWidth="200.0" stylesheets="@ClientForm.css" GridPane.rowIndex="3">
