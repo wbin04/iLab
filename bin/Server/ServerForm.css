@@ -13,22 +13,15 @@
 	-fx-pref-height: 45%;
 }
 
+.split-pane > .split-pane-divider {
+    -fx-padding: 1px;
+    -fx-background-color: #f0f4f8;
+    -fx-border-width: 1px;
+}
+
 #gridPane{
 	-fx-pref-width: 55%;
 	-fx-pref-height: 100%;
-}
-
-#btnOpen, #btnClose {
-	-fx-background-color: #fff;
-    -fx-border-color: #000;
-    -fx-font-weight: bold;
-    -fx-border-radius: 10px;
-    -fx-background-radius: 10px;
-}
-
-#btnOpen:hover, #btnClose:hover {
-    -fx-scale-x: 1.05;
-    -fx-scale-y: 1.05;
 }
 
 #splitPane_chat{
@@ -84,4 +77,54 @@
 
 #flowPane_panel{
 	
+}
+
+.combo-box {
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-border-color: #102a43;
+    -fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-background-color: #bcccdc;
+    -fx-text-fill: #102a43;
+    -fx-font-weight: bold;
+}
+
+.combo-box-popup {
+    -fx-background-color: #f0f4f8;
+    -fx-border-color: #102a43;
+    -fx-border-radius: 10px;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #102a43;
+}
+
+.combo-box .list-cell:hover {
+    -fx-background-color: #d9e2ec;
+    -fx-text-fill: #102a43;
+}
+
+.button {
+    -fx-background-color: #bcccdc;
+    -fx-text-fill: #102a43;
+    -fx-border-color: #102a43;
+    -fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-font-weight: bold;
+}
+
+.button:hover {
+    -fx-background-color: #102a43;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+
+.text-field, .scroll-pane {
+	-fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
 }

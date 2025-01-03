@@ -162,6 +162,7 @@ public class ClientListener {
         root.setCenter(remotePanel);
 
         Scene scene = new Scene(root, 1344, 756);
+//        scene.getStylesheets().add(getClass().getResource("ClientListenerMenu.css").toExternalForm());
         stage.setScene(scene);
         stage.setMaximized(true);
         stage.setOnCloseRequest(event -> {

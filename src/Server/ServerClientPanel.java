@@ -105,7 +105,7 @@ public class ServerClientPanel {
 		
 		Platform.runLater(() -> {
 			controller.lbStatus.setText("Đã ngắt kết nối");
-			controller.lbStatus.setStyle("-fx-text-fill: orange;");
+			controller.lbStatus.setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
 			
 			controller.btnChat.setVisible(false);
 			controller.btnView.setVisible(false);
@@ -153,11 +153,11 @@ public class ServerClientPanel {
 		controller.btnFile.setVisible(false);
 		if(status) {
 			controller.lbStatus.setText("Đã kết nối");
-			controller.lbStatus.setStyle("-fx-text-fill: green;");
+			controller.lbStatus.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
 		}
 		else {
 			controller.lbStatus.setText("Chưa kết nối");
-			controller.lbStatus.setStyle("-fx-text-fill: red;");
+			controller.lbStatus.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
 		}
 	}
 
@@ -227,6 +227,8 @@ public class ServerClientPanel {
 		    pane.setPrefHeight(324);
 		    controller.borderPane.setCenter(pane);
 		    animateResize(controller.borderPane, 576, 324);
+		    
+		    controller.gridPane.setStyle("-fx-background-color: transparent;");
 		    
 			controller.lbNum.setVisible(false);
 			controller.lbStatus.setVisible(false);

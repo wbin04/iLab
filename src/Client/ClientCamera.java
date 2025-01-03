@@ -77,7 +77,6 @@ public class ClientCamera implements Runnable {
                 }
 				capture.release();
             } catch (Exception e) {
-//                e.printStackTrace();
             	closeConnection();
             }
         }).start();

@@ -17,6 +17,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
@@ -163,35 +165,46 @@ public class ClientChatForm implements Runnable{
             FlowPane flowPane = new FlowPane();
             flowPane.setPrefWidth(350);
             
+            Region spacer = new Region();
+            spacer.setPrefHeight(50);
+            
             if (isChat) {
-                label.setStyle("-fx-font-size: 18px; -fx-fill: black; -fx-background-color: #DCF8C6; -fx-background-radius: 10;");
+                label.setStyle("-fx-font-size: 18px; -fx-text-fill: white; -fx-background-color: #102a43; -fx-background-radius: 10;");
                 textFlow.getChildren().add(label);
                 flowPane.getChildren().add(textFlow);
+                flowPane.getChildren().add(spacer);
                 flowPane.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);  
             } 
             else if(isFile) {
             	Text text1 = new Text("Đã nhận: ");
-                text1.setStyle("-fx-font-size: 18px; -fx-fill: black;"); 
+            	text1.setStyle("-fx-font-size: 18px;"); 
+                text1.setFill(Color.web("#102a43"));
 
                 Text fileText = new Text(msg);
-                fileText.setStyle("-fx-font-size: 18px; -fx-fill: red;"); 
+                fileText.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;"); 
+                fileText.setFill(Color.RED);
                 
                 Text text2 = new Text(" tại thư mục ");
-                text2.setStyle("-fx-font-size: 18px; -fx-fill: black;"); 
+                text2.setStyle("-fx-font-size: 18px;"); 
+                text2.setFill(Color.web("#102a43"));
 
                 Text folderText = new Text("D:/Remote/File");
-                folderText.setStyle("-fx-font-size: 18px; -fx-fill: red;");
+                folderText.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;"); 
+                folderText.setFill(Color.RED);
 
+                textFlow.getChildren().clear();
                 textFlow.getChildren().addAll(text1, fileText, text2, folderText);
                 textFlow.setStyle("-fx-padding: 10px 20px 10px 20px; -fx-background-color: #FFFFFF; -fx-background-radius: 10;");
                 flowPane.getChildren().add(textFlow);
+                flowPane.getChildren().add(spacer);
                 flowPane.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
 //                flowPane.setAlignment(Pos.CENTER);
             }
             else {
-                label.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 10;");
+                label.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 10; -fx-text-fill: #102a43");
                 textFlow.getChildren().add(label);
                 flowPane.getChildren().add(textFlow);
+                flowPane.getChildren().add(spacer);
                 flowPane.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);  
             }
             

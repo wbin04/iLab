@@ -10,8 +10,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.TextFlow?>
 
-
-<GridPane id="gridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="400.0" stylesheets="@ClientChatForm.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<GridPane id="gridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="400.0" style="-fx-background-color: #f0f4f8;" stylesheets="@ClientChatForm.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
   <columnConstraints>
     <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
   </columnConstraints>
@@ -20,7 +19,7 @@
     <RowConstraints maxHeight="244.7999938964844" minHeight="10.0" prefHeight="50.99997558593748" vgrow="SOMETIMES" />
   </rowConstraints>
    <children>
-      <ScrollPane id="scrollPane" fx:id="scrollPane" fitToWidth="true" stylesheets="@ClientChatForm.css">
+      <ScrollPane id="scrollPane" fx:id="scrollPane" fitToWidth="true" style="-fx-background-color: #bcccdc;" stylesheets="@ClientChatForm.css">
          <content>
             <TextFlow id="textFlow" fx:id="chatArea" prefWidth="398.0" stylesheets="@ClientChatForm.css" textAlignment="JUSTIFY">
                <padding>

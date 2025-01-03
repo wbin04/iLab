@@ -2,26 +2,31 @@
 	-fx-font-size: 18px;
 }
 
-#scrollPane{
-	
+.button {
+    -fx-background-color: #bcccdc;
+    -fx-text-fill: #102a43;
+    -fx-border-color: #102a43;
+    -fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-font-weight: bold;
 }
 
-#textFlow{
-	
+.button:hover {
+    -fx-background-color: #102a43;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
 }
 
-#flowPane{
-	
+.text-field {
+	-fx-text-fill: #102a43;
+	-fx-font-weight: bold;
+    -fx-border-color: #102a43;
+	-fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
 }
 
-#chatField{
-	
-}
-
-#btnSend{
-	
-}
-
-#btnSend:hover{
-	
+.scroll-pane .viewport {
+    -fx-background-color: #f0f4f8; 
 }

@@ -13,7 +13,7 @@
 <StackPane fx:id="stackPane" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Server.ServerClientPanel">
    <children>
       <BorderPane fx:id="borderPane" prefHeight="200.0" prefWidth="300.0" />
-      <GridPane id="gridPane_panel" fx:id="gridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="300.0" stylesheets="@ServerClientPanel.css">
+      <GridPane id="gridPane_panel" fx:id="gridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="300.0" style="-fx-background-color: #f0f4f8;" stylesheets="@ServerClientPanel.css">
         <columnConstraints>
           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
         </columnConstraints>
@@ -26,8 +26,8 @@
          <children>
             <FlowPane alignment="CENTER_LEFT" hgap="50.0">
                <children>
-                  <Label id="lbNum_panel" fx:id="lbNum" stylesheets="@ServerClientPanel.css" text="Máy số 0" />
-                  <Label id="lbStatus_panel" fx:id="lbStatus" stylesheets="@ServerClientPanel.css" text="Chưa kết nối" />
+                  <Label id="lbNum_panel" fx:id="lbNum" style="-fx-text-fill: #102a43; -fx-font-weight: bold;" stylesheets="@ServerClientPanel.css" text="Máy số 0" />
+                  <Label id="lbStatus_panel" fx:id="lbStatus" style="-fx-font-weight: bold;" stylesheets="@ServerClientPanel.css" text="Chưa kết nối" />
                </children>
                <padding>
                   <Insets left="20.0" />
@@ -35,7 +35,7 @@
             </FlowPane>
             <FlowPane alignment="CENTER_LEFT" GridPane.rowIndex="1">
                <children>
-                  <Label id="lnTime_panel" fx:id="lbTime" stylesheets="@ServerClientPanel.css" text="Thời gian sử dụng" />
+                  <Label id="lnTime_panel" fx:id="lbTime" style="-fx-text-fill: #102a43; -fx-font-weight: bold;" stylesheets="@ServerClientPanel.css" text="Thời gian sử dụng" />
                </children>
                <padding>
                   <Insets left="20.0" />
@@ -43,7 +43,7 @@
             </FlowPane>
             <FlowPane alignment="CENTER_LEFT" GridPane.rowIndex="2">
                <children>
-                  <Label id="lbName_panel" fx:id="lbName" stylesheets="@ServerClientPanel.css" text="Họ tên" />
+                  <Label id="lbName_panel" fx:id="lbName" style="-fx-text-fill: #102a43; -fx-font-weight: bold;" stylesheets="@ServerClientPanel.css" text="Họ tên" />
                </children>
                <padding>
                   <Insets left="20.0" />

@@ -18,6 +18,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
@@ -160,22 +162,28 @@ public class ServerChatForm implements Runnable{
             FlowPane flowPane = new FlowPane();
             flowPane.setPrefWidth(350);
             
+            Region spacer = new Region();
+            spacer.setPrefHeight(50);
+            
             if (isChat) {
-                label.setStyle("-fx-font-size: 18px; -fx-fill: black; -fx-background-color: #DCF8C6; -fx-background-radius: 10;");
+                label.setStyle("-fx-font-size: 18px; -fx-text-fill: white; -fx-background-color: #102a43; -fx-background-radius: 10;");
                 textFlow.getChildren().add(label);
                 flowPane.getChildren().add(textFlow);
+                flowPane.getChildren().add(spacer);
                 flowPane.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);  
             } 
             else {
             	Text prefixText = new Text(name + ": ");
-                prefixText.setStyle("-fx-font-size: 18px; -fx-fill: red;"); 
+            	prefixText.setStyle("-fx-font-size: 18px;"); 
+                prefixText.setFill(Color.RED);
 
                 Text fileText = new Text(msg);
-                fileText.setStyle("-fx-font-size: 18px; -fx-fill: black;"); 
+                fileText.setStyle("-fx-font-size: 18px; -fx-text-fill: #102a43;"); 
 
                 textFlow.getChildren().addAll(prefixText, fileText);
                 textFlow.setStyle("-fx-padding: 10px 20px 10px 20px; -fx-background-color: #FFFFFF; -fx-background-radius: 10;");
                 flowPane.getChildren().add(textFlow);
+                flowPane.getChildren().add(spacer);
                 flowPane.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
 //                flowPane.setAlignment(Pos.CENTER);
             }

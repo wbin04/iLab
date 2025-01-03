@@ -7,21 +7,21 @@
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.Pane?>
 
-<SplitPane fx:id="splitPane" dividerPositions="0.85" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="450.0" prefWidth="400.0" style="-fx-font-size: 18px;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<SplitPane fx:id="splitPane" dividerPositions="0.85" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefHeight="450.0" prefWidth="400.0" style="-fx-font-size: 18px; -fx-background-color: #f0f4f8;" stylesheets="@ClientTaskManager.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
   <items>
       <Pane prefHeight="200.0" prefWidth="200.0">
          <children>
-            <TableView fx:id="tableView" minWidth="400.0" prefHeight="376.0" prefWidth="400.0">
+            <TableView fx:id="tableView" prefHeight="376.0" prefWidth="400.0" style="-fx-background-color: #f0f4f8;">
               <columns>
                 <TableColumn fx:id="nameColumn" editable="false" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" resizable="false" text="Tên chương trình" />
-                <TableColumn fx:id="idColumn" editable="false" maxWidth="170.0" minWidth="170.0" prefWidth="170.0" resizable="false" text="ID" />
+                <TableColumn fx:id="idColumn" editable="false" maxWidth="199.20001220703125" minWidth="170.0" prefWidth="199.20001220703125" resizable="false" text="ID" />
               </columns>
             </TableView>
          </children>
       </Pane>
       <FlowPane alignment="CENTER" prefHeight="200.0" prefWidth="200.0">
          <children>
-            <Button fx:id="btnClose" mnemonicParsing="false" text="Đóng" />
+            <Button fx:id="btnClose" mnemonicParsing="false" stylesheets="@ClientTaskManager.css" text="Đóng" />
          </children>
       </FlowPane>
   </items>
