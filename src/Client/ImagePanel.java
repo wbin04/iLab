@@ -56,7 +56,7 @@ public class ImagePanel extends Canvas {
     }
 
     private void drawImage() {
-        if (img != null) {
+        if (img != null && !this.isDisabled()) {
             GraphicsContext gc = this.getGraphicsContext2D();
             Image fxImage = SwingFXUtils.toFXImage(img, null);
             gc.clearRect(0, 0, getWidth(), getHeight());

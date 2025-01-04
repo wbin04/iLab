@@ -143,9 +143,9 @@
             </SplitPane>
         </items>
       </SplitPane>
-      <ScrollPane id="scrollPane_panel" fx:id="panelPane" fitToHeight="true" fitToWidth="true" prefHeight="343.0" prefWidth="989.0" style="-fx-background-color: #f0f4f8;" stylesheets="@ServerForm.css">
+      <ScrollPane id="scrollPane_panel" fx:id="panelPane" fitToHeight="true" hbarPolicy="NEVER" prefHeight="343.0" prefWidth="989.0" style="-fx-background-color: #f0f4f8;" stylesheets="@ServerForm.css">
          <content>
-            <FlowPane id="flowPane_panel" fx:id="clientContainer" hgap="30.0" maxWidth="Infinity" prefHeight="323.0" prefWidth="1138.0" prefWrapLength="1000" stylesheets="@ServerForm.css" vgap="30.0">
+            <FlowPane id="flowPane_panel" fx:id="clientContainer" hgap="30.0" prefHeight="338.0" prefWidth="1700.0" prefWrapLength="1000" stylesheets="@ServerForm.css" vgap="30.0">
                <padding>
                   <Insets bottom="30.0" left="60.0" right="60.0" top="30.0" />
                </padding>

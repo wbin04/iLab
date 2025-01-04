@@ -267,7 +267,7 @@ public class ClientHandler implements Runnable{
                 	dosStream.flush();
                 }
 
-
+                img.flush();
                 Thread.sleep(10);
             
             } catch (SocketException e) {
@@ -300,7 +300,7 @@ public class ClientHandler implements Runnable{
                 	dosImage.flush();
                 }
 
-
+                img.flush();
                 Thread.sleep(10);
             
             } catch (SocketException e) {

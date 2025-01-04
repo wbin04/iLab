@@ -374,6 +374,7 @@ public class ServerForm extends Application {
         for (int i = 1; i <= count; i++) {
         	
         	ServerClientPanel clientPanel = new ServerClientPanel();
+        	clientPanel.setPanel(panelPane, clientContainer);
         	clientContainer.getChildren().add(clientPanel.getPanel(i));
         	
         	clientFormsMap.put(i, clientPanel);
@@ -459,6 +460,8 @@ public class ServerForm extends Application {
             } catch (Exception e) {
 //              e.printStackTrace();
             	System.out.println("Client ngat ket noi");
+            	ServerClientPanel panel = clientFormsMap.get(stt);
+            	panel.stopStreamView();
             }
     	}).start();
     }

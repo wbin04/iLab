@@ -14,7 +14,9 @@ import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -66,9 +68,20 @@ public class ServerClientPanel {
     private boolean isShowCamera;
     
     private Canvas cameraCanvas;
+    
+    private ScrollPane scrollPane;
+    private FlowPane flowPane;
+    
+    private boolean isExpanded = false; 
+    private Timeline resizeTimeline;
 	
 	public ServerClientPanel() {
 		loader = new FXMLLoader(getClass().getResource("ServerClientPanel.fxml"));
+	}
+	
+	public void setPanel(ScrollPane pane1, FlowPane pane2) {
+		scrollPane = pane1;
+		flowPane = pane2;
 	}
 	
 	public Parent getPanel(int stt) {
@@ -211,72 +224,77 @@ public class ServerClientPanel {
 				e2.printStackTrace();
 			}
 		});
-		controller.gridPane.setOnMouseEntered(event -> {
-//			controller.gridPane.setPrefWidth(576);
-//			controller.gridPane.setPrefHeight(324);
-			animateResize(controller.gridPane, 576, 324);
-			
-			Pane pane;
-			if(isShowCamera) {
-				pane = new Pane(serverCamera.canvasResize(cameraCanvas, true));
-			}
-			else {
-				pane = new Pane(clientListener.showStream(true));
-			}
-		    pane.setPrefWidth(576);
-		    pane.setPrefHeight(324);
-		    controller.borderPane.setCenter(pane);
-		    animateResize(controller.borderPane, 576, 324);
-		    
-		    controller.gridPane.setStyle("-fx-background-color: transparent;");
-		    
-			controller.lbNum.setVisible(false);
-			controller.lbStatus.setVisible(false);
-			controller.lbTime.setVisible(false);
-			controller.lbName.setVisible(false);
-			controller.btnChat.setVisible(true);
-			controller.btnView.setVisible(true);
-			controller.btnFile.setVisible(true);
-	    });
-		controller.gridPane.setOnMouseExited(event -> {
-//			controller.gridPane.setPrefWidth(300);
-//			controller.gridPane.setPrefHeight(200);
-			animateResize(controller.gridPane, 300, 200);
-			if(isStream) {
-				controller.borderPane.setCenter(clientListener.showStream(false));
-				animateResize(controller.borderPane, 300, 200);
-				controller.lbNum.setVisible(false);
-				controller.lbStatus.setVisible(false);
-				controller.lbTime.setVisible(false);
-				controller.lbName.setVisible(false);
-				controller.btnChat.setVisible(false);
-				controller.btnView.setVisible(false);
-				controller.btnFile.setVisible(false);
-			}
-			else if(isShowCamera) {
-				controller.borderPane.setCenter(serverCamera.canvasResize(cameraCanvas, false));
-				animateResize(controller.borderPane, 300, 200);
-				controller.lbNum.setVisible(false);
-				controller.lbStatus.setVisible(false);
-				controller.lbTime.setVisible(false);
-				controller.lbName.setVisible(false);
-				controller.btnChat.setVisible(false);
-				controller.btnView.setVisible(false);
-				controller.btnFile.setVisible(false);
-			}
-			else {
-				controller.borderPane.setCenter(clientListener.showStream(false));
-				controller.borderPane.setCenter(null);
-				animateResize(controller.borderPane, 300, 200);
-				controller.lbNum.setVisible(true);
-				controller.lbStatus.setVisible(true);
-				controller.lbTime.setVisible(true);
-				controller.lbName.setVisible(true);
-				controller.btnChat.setVisible(false);
-				controller.btnView.setVisible(false);
-				controller.btnFile.setVisible(false);
-			}
-	    });
+		controller.gridPane.setOnMouseEntered(event -> handleMouseEnter());
+	    controller.gridPane.setOnMouseExited(event -> handleMouseExit());
+	}
+	
+	private void handleMouseEnter() {
+	    if (isExpanded || (resizeTimeline != null && resizeTimeline.getStatus() == Timeline.Status.RUNNING)) {
+	        return;
+	    }
+	    isExpanded = true;
+	    animateResize(controller.gridPane, 576, 324);
+
+	    if (isLastInRow()) {
+	    	scrollPane.setHvalue(scrollPane.getHmax());
+	    }
+
+	    Pane pane;
+	    if (isShowCamera) {
+	        pane = new Pane(serverCamera.canvasResize(cameraCanvas, true));
+	    } else {
+	        pane = new Pane(clientListener.showStream(true));
+	    }
+	    pane.setPrefWidth(576);
+	    pane.setPrefHeight(324);
+	    controller.borderPane.setCenter(pane);
+
+	    controller.gridPane.setStyle("-fx-background-color: transparent;");
+	    toggleLabels(false);
+	}
+
+	private boolean isLastInRow() {
+	    if (flowPane == null) {
+	        return false;
+	    }
+
+	    double scrollPaneWidth = scrollPane.getViewportBounds().getWidth();
+	    double panelWidth = controller.gridPane.getWidth();
+
+	    int panelsPerRow = Math.max(1, (int) (scrollPaneWidth / panelWidth));
+
+	    int index = flowPane.getChildren().indexOf(loader.getRoot());
+
+	    return (index + 1) % panelsPerRow == 0;
+	}
+	
+	private void handleMouseExit() {
+	    if (!isExpanded || (resizeTimeline != null && resizeTimeline.getStatus() == Timeline.Status.RUNNING)) {
+	        return;
+	    }
+	    isExpanded = false;
+	    animateResize(controller.gridPane, 300, 200);
+	    scrollPane.setHvalue(0.0);
+	    
+	    if (isStream) {
+	        controller.borderPane.setCenter(clientListener.showStream(false));
+	    } else if (isShowCamera) {
+	        controller.borderPane.setCenter(serverCamera.canvasResize(cameraCanvas, false));
+	    } else {
+	        controller.borderPane.setCenter(null);
+	    }
+
+	    toggleLabels(true);
+	}
+
+	private void toggleLabels(boolean show) {
+	    controller.lbNum.setVisible(show);
+	    controller.lbStatus.setVisible(show);
+	    controller.lbTime.setVisible(show);
+	    controller.lbName.setVisible(show);
+	    controller.btnChat.setVisible(!show);
+	    controller.btnView.setVisible(!show);
+	    controller.btnFile.setVisible(!show);
 	}
 	
 	public void startCameraView() {
@@ -343,14 +361,16 @@ public class ServerClientPanel {
 	}
 	
 	private void animateResize(Region pane, double targetWidth, double targetHeight) {
-	    Timeline timeline = new Timeline();
+	    if (resizeTimeline != null && resizeTimeline.getStatus() == Timeline.Status.RUNNING) {
+	        resizeTimeline.stop();
+	    }
 
-	    KeyValue widthValue = new KeyValue(pane.prefWidthProperty(), targetWidth);
-	    KeyValue heightValue = new KeyValue(pane.prefHeightProperty(), targetHeight);
-
-	    KeyFrame keyFrame = new KeyFrame(Duration.millis(300), widthValue, heightValue);
-
-	    timeline.getKeyFrames().add(keyFrame);
-	    timeline.play();
+	    resizeTimeline = new Timeline(
+	        new KeyFrame(Duration.millis(300),
+	            new KeyValue(pane.prefWidthProperty(), targetWidth),
+	            new KeyValue(pane.prefHeightProperty(), targetHeight)
+	        )
+	    );
+	    resizeTimeline.play();
 	}
 }
