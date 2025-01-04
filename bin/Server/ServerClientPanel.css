@@ -1,0 +1,41 @@
+#gridPane_panel{
+	-fx-font-size: 18px;
+	-fx-border-color: #102a43;
+	-fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+#lbStatus_panel{
+	-fx-text-fill: red;
+}
+
+.btn{
+	-fx-padding: 5px 10px;
+}
+
+.btn:hover{
+	
+}
+
+.button {
+    -fx-background-color: #bcccdc;
+    -fx-text-fill: #102a43;
+    -fx-border-color: #102a43;
+    -fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-font-weight: bold;
+}
+
+.button:hover {
+    -fx-background-color: #102a43;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+
+.stack-pane, .grid-pane, .border-pane {
+	-fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}

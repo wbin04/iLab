@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+
+<StackPane fx:id="stackPane" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Server.ServerClientPanel">
+   <children>
+      <BorderPane fx:id="borderPane" prefHeight="200.0" prefWidth="300.0" />
+      <GridPane id="gridPane_panel" fx:id="gridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="300.0" style="-fx-background-color: #f0f4f8;" stylesheets="@ServerClientPanel.css">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <FlowPane alignment="CENTER_LEFT" hgap="50.0">
+               <children>
+                  <Label id="lbNum_panel" fx:id="lbNum" style="-fx-text-fill: #102a43; -fx-font-weight: bold;" stylesheets="@ServerClientPanel.css" text="Máy số 0" />
+                  <Label id="lbStatus_panel" fx:id="lbStatus" style="-fx-font-weight: bold;" stylesheets="@ServerClientPanel.css" text="Chưa kết nối" />
+               </children>
+               <padding>
+                  <Insets left="20.0" />
+               </padding>
+            </FlowPane>
+            <FlowPane alignment="CENTER_LEFT" GridPane.rowIndex="1">
+               <children>
+                  <Label id="lnTime_panel" fx:id="lbTime" style="-fx-text-fill: #102a43; -fx-font-weight: bold;" stylesheets="@ServerClientPanel.css" text="Thời gian sử dụng" />
+               </children>
+               <padding>
+                  <Insets left="20.0" />
+               </padding>
+            </FlowPane>
+            <FlowPane alignment="CENTER_LEFT" GridPane.rowIndex="2">
+               <children>
+                  <Label id="lbName_panel" fx:id="lbName" style="-fx-text-fill: #102a43; -fx-font-weight: bold;" stylesheets="@ServerClientPanel.css" text="Họ tên" />
+               </children>
+               <padding>
+                  <Insets left="20.0" />
+               </padding>
+            </FlowPane>
+            <FlowPane alignment="TOP_CENTER" hgap="20.0" GridPane.rowIndex="3">
+               <children>
+                  <Button id="btnChat_panel" fx:id="btnChat" mnemonicParsing="false" styleClass="btn" stylesheets="@ServerClientPanel.css" text="Nhắn tin" />
+                  <Button id="btnView_panel" fx:id="btnView" mnemonicParsing="false" styleClass="btn" stylesheets="@ServerClientPanel.css" text="Xem màn hình" />
+                  <Button id="btnFile_panel" fx:id="btnFile" mnemonicParsing="false" styleClass="btn" stylesheets="@ServerClientPanel.css" text="Truyền file" />
+               </children>
+            </FlowPane>
+         </children>
+      </GridPane>
+   </children>
+</StackPane>

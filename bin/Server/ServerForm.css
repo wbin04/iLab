@@ -1,0 +1,130 @@
+.split-pane-divider {
+   	-fx-background-color: transparent; 
+}
+.scroll-pane .viewport {
+    -fx-background-color: transparent; 
+}
+
+#container{
+	-fx-font-size: 18px;
+}
+
+#splitPane{
+	-fx-pref-height: 45%;
+}
+
+.split-pane > .split-pane-divider {
+    -fx-padding: 1px;
+    -fx-background-color: #f0f4f8;
+    -fx-border-width: 1px;
+}
+
+#gridPane{
+	-fx-pref-width: 55%;
+	-fx-pref-height: 100%;
+}
+
+#splitPane_chat{
+	-fx-pref-width: 45%;
+	-fx-pref-height: 100%;
+}
+
+#scrollPane_chat{
+	-fx-pref-width: 100%;
+	-fx-pref-height: 90%;
+	-fx-border-color: #000;
+	-fx-border-radius: 5px;
+	-fx-background-radius: 10px;
+}
+
+#textFlow_chat{
+	
+}
+
+#flowPane_chat{
+	-fx-pref-width: 100%;
+	-fx-pref-height: 10%;
+}
+
+#btnFile{
+	-fx-background-color: #fff;
+	-fx-border-color: #000;
+	-fx-font-weight: bold;
+	-fx-border-radius: 10px;
+	-fx-background-radius: 10px;
+}
+
+#chatField{
+	-fx-border-color: #000;
+	-fx-border-radius: 10px;
+	-fx-background-radius: 10px;
+	-fx-pref-width: 300px;
+}
+
+#btnSend {
+    -fx-border-color: #000;
+    -fx-border-radius: 10px; 
+    -fx-background-radius: 10px; 
+    -fx-font-weight: bold; 
+}
+
+#scrollPane_panel{
+	-fx-pref-height: 55%;
+	-fx-border-color: #000;
+	-fx-border-radius: 5px;
+	-fx-background-radius: 10px;
+}
+
+#flowPane_panel{
+	
+}
+
+.combo-box {
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-border-color: #102a43;
+    -fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-background-color: #bcccdc;
+    -fx-text-fill: #102a43;
+    -fx-font-weight: bold;
+}
+
+.combo-box-popup {
+    -fx-background-color: #f0f4f8;
+    -fx-border-color: #102a43;
+    -fx-border-radius: 10px;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #102a43;
+}
+
+.combo-box .list-cell:hover {
+    -fx-background-color: #d9e2ec;
+    -fx-text-fill: #102a43;
+}
+
+.button {
+    -fx-background-color: #bcccdc;
+    -fx-text-fill: #102a43;
+    -fx-border-color: #102a43;
+    -fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-font-weight: bold;
+}
+
+.button:hover {
+    -fx-background-color: #102a43;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+
+.text-field, .scroll-pane {
+	-fx-border-width: 2px;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
