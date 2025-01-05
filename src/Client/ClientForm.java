@@ -79,7 +79,7 @@ public class ClientForm extends Application {
 	            boolean found = false;
 
 //	            for (int c = 10; c <= 254 && !found; c++) 
-                for (int d = 1; d <= 254 && !found; d++) {  
+                for (int d = 2; d <= 254 && !found; d++) {  
                     String ip = temp + d;
                     try (Socket lookupSocket = new Socket()) {  
                     	lookupSocket.connect(new InetSocketAddress(ip, lookupServerPort), 100);
@@ -174,42 +174,51 @@ public class ClientForm extends Application {
         });
         
         btnJoin.setOnAction(event -> {
-        	setStatus(true);
-    		String name = tfName.getText();
-    		String stt = (String)cbbNum.getValue();
-        	try {
-				Stage stage = (Stage) btnJoin.getScene().getWindow();
-				dos.writeUTF(stt + "," + name);
-	            dos.flush();
-	            
-	            new ClientListenerMain(ipAddress, port, name, stt, stage);
-//	            stage.hide();
-				
-	            isRunning = true;
-//				dos.close();
-//				dis.close();
-	            
-	            new Thread(() -> {
-	            	while(isRunning) {
-		            	try {
-							dos.writeUTF("RUNNING");
-			            	dos.flush();
-			            	
-			            	Thread.sleep(1000);
-						} catch (Exception e) {
-//							e.printStackTrace();
-							System.out.println("Server đã đóng kết nối");
-							setStatus(true);
-				        	isRunning = false;
-						} 
-		            }
-	            }).start();
-			} catch (Exception e2) {
-				System.out.println("Loi btnJoin ClientLoginForm");
-				setStatus(true);
-	        	isRunning = false;
-			}
+            setStatus(true);
+            String name = tfName.getText();
+            String stt = (String) cbbNum.getValue(); // Số thứ tự máy được chọn
+
+            try {
+                dos.writeUTF("JOIN_MACHINE:" + stt + "," + name);
+                dos.flush();
+
+                String serverResponse = dis.readUTF();
+
+                if (serverResponse.equals("MACHINE_UNAVAILABLE")) {
+                    Platform.runLater(() -> {
+                        System.out.println("Máy đã được chọn bởi client khác. Vui lòng chọn lại.");
+                        btnFind.setDisable(false);
+                        setStatus(false);
+                    });
+                } else if (serverResponse.equals("MACHINE_CONFIRMED")) {
+                    Platform.runLater(() -> {
+                        Stage stage = (Stage) btnJoin.getScene().getWindow();
+                        new ClientListenerMain(ipAddress, port, name, stt, stage);
+
+                        isRunning = true;
+
+                        new Thread(() -> {
+                            while (isRunning) {
+                                try {
+                                    dos.writeUTF("RUNNING");
+                                    dos.flush();
+                                    Thread.sleep(1000);
+                                } catch (Exception e) {
+                                    System.out.println("Server đã đóng kết nối");
+                                    setStatus(true);
+                                    isRunning = false;
+                                }
+                            }
+                        }).start();
+                    });
+                }
+            } catch (Exception e2) {
+                System.out.println("Lỗi xử lý sự kiện btnJoin ClientLoginForm");
+                setStatus(true);
+                isRunning = false;
+            }
         });
+
     }
 	
 	private void setStatus(boolean status) {

@@ -277,14 +277,41 @@ public class ServerClientPanel {
 	    scrollPane.setHvalue(0.0);
 	    
 	    if (isStream) {
-	        controller.borderPane.setCenter(clientListener.showStream(false));
+	    	controller.borderPane.setCenter(clientListener.showStream(false));
+//			animateResize(controller.borderPane, 300, 200);
+//	        toggleLabels(false);
+	        controller.lbNum.setVisible(false);
+			controller.lbStatus.setVisible(false);
+			controller.lbTime.setVisible(false);
+			controller.lbName.setVisible(false);
+			controller.btnChat.setVisible(false);
+			controller.btnView.setVisible(false);
+			controller.btnFile.setVisible(false);
 	    } else if (isShowCamera) {
 	        controller.borderPane.setCenter(serverCamera.canvasResize(cameraCanvas, false));
+//	        animateResize(controller.borderPane, 300, 200);
+//	        toggleLabels(false);
+	        controller.lbNum.setVisible(false);
+			controller.lbStatus.setVisible(false);
+			controller.lbTime.setVisible(false);
+			controller.lbName.setVisible(false);
+			controller.btnChat.setVisible(false);
+			controller.btnView.setVisible(false);
+			controller.btnFile.setVisible(false);
 	    } else {
+	    	controller.borderPane.setCenter(clientListener.showStream(false));
 	        controller.borderPane.setCenter(null);
-	    }
 
-	    toggleLabels(true);
+
+//		    toggleLabels(true);
+	        controller.lbNum.setVisible(true);
+			controller.lbStatus.setVisible(true);
+			controller.lbTime.setVisible(true);
+			controller.lbName.setVisible(true);
+			controller.btnChat.setVisible(false);
+			controller.btnView.setVisible(false);
+			controller.btnFile.setVisible(false);
+	    }
 	}
 
 	private void toggleLabels(boolean show) {

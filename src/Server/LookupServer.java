@@ -44,7 +44,7 @@ public class LookupServer {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }
     }
 }

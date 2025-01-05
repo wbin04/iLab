@@ -107,6 +107,7 @@ public class ServerForm extends Application {
     
     private boolean isRunning;
     private int port;
+    private final Object lock = new Object();
 
     public static void main(String[] args) {
     	launch(args);
@@ -286,66 +287,83 @@ public class ServerForm extends Application {
 
                         String clientSignal = dis.readUTF();
                         if (clientSignal.equals("CONNECT_TO_SERVER")) {
-                            String listMachines = "";
-                            for (int n : clientConnected.keySet()) {
-                                if (!clientConnected.get(n)) {
-                                    listMachines += "" + n + ",";
+                            synchronized (lock) {
+                                StringBuilder listMachines = new StringBuilder();
+                                for (int n : clientConnected.keySet()) {
+                                    if (!clientConnected.get(n)) {
+                                        listMachines.append(n).append(",");
+                                    }
+                                }
+
+                                if (listMachines.length() == 0) {
+                                    dos.writeUTF("NO_AVAILABLE_MACHINES");
+                                } else {
+                                    listMachines.setLength(listMachines.length() - 1);
+                                    dos.writeUTF(listMachines.toString());
                                 }
                             }
-                            System.out.println("Sending listMachines: " + listMachines);
-                            dos.writeUTF(listMachines);
                         }
-                        
-                        String msg = dis.readUTF();
-//            			System.out.println("Server: " + msg);
-            			if(msg.equals("DISCONNECTED")) {
+
+                        String msg = dis.readUTF(); //JOIN_MACHINE: stt:name
+                        if (msg.startsWith("JOIN_MACHINE")) {
+                            String[] parts = msg.split(":")[1].split(",");
+                            int selectedMachine = Integer.parseInt(parts[0]); // Số thứ tự máy
+                            String clientName = parts[1]; // Tên
+
+                            synchronized (lock) {
+                                if (clientConnected.get(selectedMachine)) {
+                                    dos.writeUTF("MACHINE_UNAVAILABLE");
+                                } else {
+                                    clientConnected.put(selectedMachine, true);
+                                    dos.writeUTF("MACHINE_CONFIRMED");
+
+                                    Socket socChat = serverSocketChat.accept();
+                                    Socket socImg = serverSocketImage.accept();
+                                    Socket socRemote = serverSocketRemote.accept();
+                                    Socket socMouse = serverSocketMouse.accept();
+                                    Socket socKeyboard = serverSocketKeyboard.accept();
+                                    Socket socFile = serverSocketFile.accept();
+                                    Socket socTM = serverSocketTaskManager.accept();
+                                    Socket socStream = serverSocketStream.accept();
+                                    Socket socBD = serverSocketBlockDomain.accept();
+                                    Socket socCam = serverSocketCamera.accept();
+
+                                    listSocket.add(soc);
+                                    listSocketChat.add(socChat);
+                                    listSocketImage.add(socImg);
+                                    listSocketRemote.add(socRemote);
+                                    listSocketMouse.add(socMouse);
+                                    listSocketKeyboard.add(socKeyboard);
+                                    listSocketFile.add(socFile);
+                                    listSocketTaskManager.add(socTM);
+                                    listSocketStream.add(socStream);
+                                    listSocketBlockDomain.add(socBD);
+                                    listSocketCamera.add(socCam);
+                        			
+
+                                    final Socket finalSoc = soc;
+                                    final Socket finalSocChat = socChat;
+                                    final Socket finalSocImg = socImg;
+                                    final Socket finalSocRemote = socRemote;
+                                    final Socket finalSocMouse = socMouse;
+                                    final Socket finalSocKeyboard = socKeyboard;
+                                    final Socket finalSocFile = socFile;
+                                    final Socket finalSocTM = socTM;
+                                    final Socket finalSocStream = socStream;
+                                    final Socket finalSocBD = socBD;
+                                    final Socket finalSocCam = socCam;
+                                    javafx.application.Platform.runLater(() -> {
+                                        refreshServerForm(finalSoc, selectedMachine + ":" + clientName, finalSocChat, finalSocImg, finalSocRemote, finalSocMouse, finalSocKeyboard, finalSocFile, finalSocTM, finalSocStream, finalSocBD, finalSocCam);
+                                    });
+                                }
+                            }
+                        }else if(msg.equals("DISCONNECTED")) {
             				dis.close();
             		        dos.close();
             		        soc.close();
             		        continue;
             			}
                         
-                        Socket socChat = serverSocketChat.accept();
-                        Socket socImg = serverSocketImage.accept();
-                        Socket socRemote = serverSocketRemote.accept();
-                        Socket socMouse = serverSocketMouse.accept();
-                        Socket socKeyboard = serverSocketKeyboard.accept();
-                        Socket socFile = serverSocketFile.accept();
-                        Socket socTM = serverSocketTaskManager.accept();
-                        Socket socStream = serverSocketStream.accept();
-                        Socket socBD = serverSocketBlockDomain.accept();
-                        Socket socCam = serverSocketCamera.accept();
-
-                        listSocket.add(soc);
-                        listSocketChat.add(socChat);
-                        listSocketImage.add(socImg);
-                        listSocketRemote.add(socRemote);
-                        listSocketMouse.add(socMouse);
-                        listSocketKeyboard.add(socKeyboard);
-                        listSocketFile.add(socFile);
-                        listSocketTaskManager.add(socTM);
-                        listSocketStream.add(socStream);
-                        listSocketBlockDomain.add(socBD);
-                        listSocketCamera.add(socCam);
-            			
-
-                        final Socket finalSoc = soc;
-                        final Socket finalSocChat = socChat;
-                        final Socket finalSocImg = socImg;
-                        final Socket finalSocRemote = socRemote;
-                        final Socket finalSocMouse = socMouse;
-                        final Socket finalSocKeyboard = socKeyboard;
-                        final Socket finalSocFile = socFile;
-                        final Socket finalSocTM = socTM;
-                        final Socket finalSocStream = socStream;
-                        final Socket finalSocBD = socBD;
-                        final Socket finalSocCam = socCam;
-                        javafx.application.Platform.runLater(() -> {
-                            refreshServerForm(finalSoc, msg, finalSocChat, finalSocImg, finalSocRemote, finalSocMouse, finalSocKeyboard, finalSocFile, finalSocTM, finalSocStream, finalSocBD, finalSocCam);
-                        });
-                        
-//                        dis.close();
-//                        dos.close();
                     } catch (SocketException e) {
                         if (!isRunning) {
                             System.out.println("Server không còn chấp nhận kết nối.");
@@ -386,9 +404,9 @@ public class ServerForm extends Application {
     }
     
     private void refreshServerForm(Socket soc, String msg, Socket socketChat, Socket socketImg, Socket socketRemote, Socket socketMouse, Socket socketKeyboard, Socket socketFile, Socket socketTM, Socket socketStream, Socket socketBD, Socket socketCam) {
-    	String[] parts = msg.split(",");
-        int stt = Integer.parseInt(parts[0]);
-        String name = parts[1];
+    	String[] parts = msg.split(":");
+        int stt = Integer.parseInt(parts[0].trim()); // Lấy số thứ tự máy
+        String name = parts[1].trim();
 
 		ServerClientPanel clientPanel = clientFormsMap.get(stt); // tìm ra được clientPanel, cấp cho nó 1 socket, ban đầu khởi tạo bằng NULL
 		clientPanel.setStartTime(System.currentTimeMillis());
